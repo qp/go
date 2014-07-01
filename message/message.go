@@ -21,5 +21,5 @@ type Message struct {
 // New creates a new Message object with appropriate fields set.
 func New(serviceName string, data interface{}, to ...string) *Message {
 	id := uuid.New()
-	return &Message{To: to, From: []string{serviceName + "/" + id}, ID: id}
+	return &Message{To: to, From: []string{serviceName + "/" + id}, ID: id, Data: data}
 }
