@@ -1,4 +1,4 @@
-package shared
+package messages
 
 import (
 	"testing"
@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMessageNew(t *testing.T) {
+func TestMessagesNewMessage(t *testing.T) {
 
 	a := assert.New(t)
 	d := map[string]interface{}{"name": "Tyler"}
-	m := New("service", d, "test")
+	m := NewMessage("service", d, "test")
 	if a.NotNil(m) {
 		a.NotEmpty(m.ID)
 		a.Equal(m.From[0], "service/"+m.ID)
