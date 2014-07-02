@@ -13,7 +13,7 @@ func TestMessagesNewMessage(t *testing.T) {
 	m := NewMessage("service", d, "test")
 	if a.NotNil(m) {
 		a.NotEmpty(m.ID)
-		a.Equal(m.From[0], "service/"+m.ID)
+		a.Equal(m.From[0], "service")
 		a.Equal(d, m.Data)
 	}
 }

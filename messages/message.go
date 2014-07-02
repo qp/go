@@ -20,5 +20,10 @@ type Message struct {
 // NewMessage creates a new Message object with appropriate fields set.
 func NewMessage(serviceName string, data interface{}, to ...string) *Message {
 	id := uuid.New()
-	return &Message{To: to, From: []string{serviceName + "/" + id}, ID: id, Data: data}
+	return &Message{To: to, From: []string{serviceName}, ID: id, Data: data}
+}
+
+// HasError returns true if the Err field is set
+func (m *Message) HasError() bool {
+	return m.Err != nil
 }
