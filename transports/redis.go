@@ -67,29 +67,32 @@ func (r *Redis) processMessages() {
 	r.once.Do(func() {
 		for t, cbs := range r.listeners {
 			go func(topic string, callbacks []MessageFunc) {
-				conn := r.pool.Get()
 				var data []byte
 				for {
 					select {
 					case <-r.kill:
-						conn.Close()
 						return
 					default:
+						conn := r.pool.Get()
 						reply, err := redis.Values(conn.Do("BRPOP", topic, "0"))
 						if err != nil {
 							if netErr, ok := err.(net.Error); ok {
 								if netErr.Timeout() {
+									conn.Close()
 									continue
 								}
 							}
+							conn.Close()
 							return
 						}
 						if _, err := redis.Scan(reply, &topic, &data); err != nil {
+							conn.Close()
 							return
 						}
 						for _, cb := range callbacks {
 							go cb(&BinaryMessage{topic: topic, data: data})
 						}
+						conn.Close()
 					}
 				}
 			}(t, cbs)
