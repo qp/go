@@ -1,0 +1,98 @@
+package transport
+
+import (
+	"net"
+	"sync"
+	"time"
+
+	"github.com/garyburd/redigo/redis"
+)
+
+// Redis is the Redis implementation of the
+// Transport interface. It provides all functionality
+// necessary to fulfill the Transport contract through
+// a Redis transport layer.
+type Redis struct {
+	pool      *redis.Pool
+	listeners map[string][]MessageFunc
+	once      sync.Once
+	kill      chan struct{}
+}
+
+// NewRedis creates a Redis instance ready for use
+func NewRedis(url string) Transport {
+	var pool = &redis.Pool{
+		MaxIdle:     8,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.DialTimeout("tcp", url, 1*time.Second, 0, 0)
+			if err != nil {
+				return nil, err
+			}
+			return c, err
+		},
+	}
+	return &Redis{pool: pool,
+		listeners: map[string][]MessageFunc{},
+		kill:      make(chan struct{})}
+}
+
+// ListenFor instructs Redis to deliver a message for the given topic
+func (r *Redis) ListenFor(topic string, callback MessageFunc) error {
+	r.listeners[topic] = append(r.listeners[topic], callback)
+	return nil
+}
+
+// Send sends a message out to Redis
+func (r *Redis) Send(topic string, message []byte) error {
+	conn := r.pool.Get()
+	_, err := conn.Do("LPUSH", topic, message)
+	conn.Close()
+	return err
+}
+
+// Start begins processing messages to/from Redis
+func (r *Redis) Start() error {
+	r.processMessages()
+	return nil
+}
+
+// Stop stops processing messages immediately
+func (r *Redis) Stop() {
+	close(r.kill)
+	r.pool.Close()
+}
+
+func (r *Redis) processMessages() {
+	r.once.Do(func() {
+		for t, cbs := range r.listeners {
+			go func(topic string, callbacks []MessageFunc) {
+				conn := r.pool.Get()
+				var data []byte
+				for {
+					select {
+					case <-r.kill:
+						conn.Close()
+						return
+					default:
+						reply, err := redis.Values(conn.Do("BRPOP", topic, "0"))
+						if err != nil {
+							if netErr, ok := err.(net.Error); ok {
+								if netErr.Timeout() {
+									continue
+								}
+							}
+							return
+						}
+						if _, err := redis.Scan(reply, &topic, &data); err != nil {
+							return
+						}
+						for _, cb := range callbacks {
+							go cb(&BinaryMessage{topic: topic, data: data})
+						}
+					}
+				}
+			}(t, cbs)
+		}
+	})
+}
