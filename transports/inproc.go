@@ -31,7 +31,7 @@ func processMessages() {
 				lock.RLock()
 				for _, instance := range callbacks {
 					for _, cb := range instance[bm.topic] {
-						cb(bm)
+						go cb(bm)
 					}
 				}
 				lock.RUnlock()
@@ -45,7 +45,7 @@ func init() {
 }
 
 // NewInProc creates a new instance of InProc
-func NewInProc() *InProc {
+func NewInProc() Transport {
 	return &InProc{id: uuid.New()}
 }
 
@@ -61,13 +61,14 @@ func (r *InProc) ListenFor(topic string, callback MessageFunc) error {
 }
 
 // Send sends a message into the transport
-func (r *InProc) Send(message *BinaryMessage) error {
-	queue <- message
+func (r *InProc) Send(topic string, message []byte) error {
+	queue <- &BinaryMessage{topic: topic, data: message}
 	return nil
 }
 
 // Start is a no-op for the InProc transport.
-func (r *InProc) Start() {
+func (r *InProc) Start() error {
+	return nil
 }
 
 // Stop removes all callbacks for this instance of InProc

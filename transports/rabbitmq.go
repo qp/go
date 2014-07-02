@@ -9,8 +9,8 @@ type RabbitMQ struct {
 
 // NewRabbitMQ creates a RabbitMQ instance and dials the connection
 // to the server.
-func NewRabbitMQ(url string) (*RabbitMQ, error) {
-	return nil, nil
+func NewRabbitMQ(url string) Transport {
+	return nil
 }
 
 // ListenFor instructs RabbitMQ to deliver a message for the given topic
@@ -19,12 +19,13 @@ func (r *RabbitMQ) ListenFor(topic string, callback MessageFunc) error {
 }
 
 // Send sends a message out to RabbitMQ
-func (r *RabbitMQ) Send(message *BinaryMessage) error {
+func (r *RabbitMQ) Send(topic string, message []byte) error {
 	return nil
 }
 
 // Start begins processing messages to/from RabbitMQ
-func (r *RabbitMQ) Start() {
+func (r *RabbitMQ) Start() error {
+	return nil
 }
 
 // Stop gracefully stops processing messages, allowing in-flight

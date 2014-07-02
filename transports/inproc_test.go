@@ -24,7 +24,7 @@ func TestInProc(t *testing.T) {
 		mc <- bm
 	})
 	ip.Start()
-	ip.Send(&BinaryMessage{topic: topic, data: data})
+	ip.Send(topic, data)
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
@@ -41,7 +41,7 @@ func TestInProc(t *testing.T) {
 		mc <- bm
 	})
 	ip.Start()
-	ip.Send(&BinaryMessage{topic: topic, data: data})
+	ip.Send(topic, data)
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
@@ -70,7 +70,7 @@ func TestInProcMultiple(t *testing.T) {
 		mc <- bm
 	})
 	ip.Start()
-	ip.Send(&BinaryMessage{topic: topic, data: data})
+	ip.Send(topic, data)
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
@@ -90,7 +90,7 @@ func TestInProcMultiple(t *testing.T) {
 	// ip.Stop() should have no effect on ip2
 	ip.Stop()
 
-	ip2.Send(&BinaryMessage{topic: topic, data: data})
+	ip2.Send(topic, data)
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
