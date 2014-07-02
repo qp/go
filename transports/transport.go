@@ -1,4 +1,10 @@
-package transport
+package transports
+
+import "errors"
+
+// ErrProcessingStarted is returned when additional listeners are added
+// after processing has begun
+var ErrProcessingStarted = errors.New("processing has started. cannot add additional listeners")
 
 // BinaryMessage is used to communicate both the
 // topic of the message and the associated data.

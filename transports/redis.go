@@ -1,8 +1,9 @@
-package transport
+package transports
 
 import (
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -13,10 +14,11 @@ import (
 // necessary to fulfill the Transport contract through
 // a Redis transport layer.
 type Redis struct {
-	pool      *redis.Pool
-	listeners map[string][]MessageFunc
-	once      sync.Once
-	kill      chan struct{}
+	pool       *redis.Pool
+	listeners  map[string][]MessageFunc
+	once       sync.Once
+	kill       chan struct{}
+	processing int32
 }
 
 // NewRedis creates a Redis instance ready for use
@@ -39,6 +41,9 @@ func NewRedis(url string) Transport {
 
 // ListenFor instructs Redis to deliver a message for the given topic
 func (r *Redis) ListenFor(topic string, callback MessageFunc) error {
+	if atomic.LoadInt32(&r.processing) == 1 {
+		return ErrProcessingStarted
+	}
 	r.listeners[topic] = append(r.listeners[topic], callback)
 	return nil
 }
@@ -65,6 +70,7 @@ func (r *Redis) Stop() {
 
 func (r *Redis) processMessages() {
 	r.once.Do(func() {
+		atomic.StoreInt32(&r.processing, 1)
 		for t, cbs := range r.listeners {
 			go func(topic string, callbacks []MessageFunc) {
 				var data []byte

@@ -1,4 +1,4 @@
-package transport
+package transports
 
 // RabbitMQ is the RabbitMQ implementation of the
 // Transport interface. It provides all functionality
