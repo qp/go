@@ -28,7 +28,7 @@ func initRedis() bool {
 		if err != nil {
 			return false
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 	return true
 }
