@@ -73,6 +73,6 @@ func (r *InProc) Start() {
 // Stop removes all callbacks for this instance of InProc
 func (r *InProc) Stop() {
 	lock.Lock()
-	callbacks[r.id] = map[string][]MessageFunc{}
+	delete(callbacks, r.id)
 	lock.Unlock()
 }

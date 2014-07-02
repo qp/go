@@ -36,6 +36,23 @@ func TestInProc(t *testing.T) {
 	}
 	ip.Stop()
 
+	// make sure we can start again after stopping
+	err = ip.ListenFor(topic, func(bm *BinaryMessage) {
+		mc <- bm
+	})
+	ip.Start()
+	ip.Send(&BinaryMessage{topic: topic, data: data})
+	if a.NoError(err) {
+		select {
+		case bm := <-mc:
+			a.Equal(topic, bm.topic)
+			a.Equal(data, bm.data)
+		case <-time.After(100 * time.Millisecond):
+			a.Fail("No message received!")
+		}
+	}
+	ip.Stop()
+
 }
 
 func TestInProcMultiple(t *testing.T) {
