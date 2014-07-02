@@ -1,6 +1,9 @@
 package transport
 
-import "os/exec"
+import (
+	"os/exec"
+	"testing"
+)
 
 // ensure RabbitMQ conforms to Transport interface
 var conformsRabbitMQ = Transport(&RabbitMQ{})
@@ -27,4 +30,8 @@ func initRabbitMQ() bool {
 
 func stopRabbitMQ() {
 	exec.Command("rabbitmqctl", "stop").Run()
+}
+
+func TestRabbitMQ(t *testing.T) {
+
 }

@@ -1,7 +1,5 @@
 package transport
 
-import "github.com/qp/go/messages"
-
 // BinaryMessage is used to communicate both the
 // topic of the message and the associated data.
 type BinaryMessage struct {
@@ -16,11 +14,11 @@ type MessageFunc func(bm *BinaryMessage)
 // for interacting with an underlying transport technology
 // such as nsq or rabbitmq.
 type Transport interface {
-	// listen for a message on the given topic
-	// must be called before calling Start
-	ListenFor(topic string) error
-	OnMessage(callback MessageFunc)       // set the function to be called when a message is received
-	Send(message *messages.Message) error // send a message to the queue
-	Start()                               // start processing messages
-	Stop()                                // gracefully stop processing messages
+	// listen for a message on the given topic and
+	// calls the given callback function when a message is
+	// received
+	ListenFor(topic string, callback MessageFunc) error
+	Send(message *BinaryMessage) error // send a message to the queue
+	Start()                            // start processing messages
+	Stop()                             // gracefully stop processing messages
 }

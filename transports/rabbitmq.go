@@ -1,7 +1,5 @@
 package transport
 
-import "github.com/qp/go/messages"
-
 // RabbitMQ is the RabbitMQ implementation of the
 // Transport interface. It provides all functionality
 // necessary to fulfill the Transport contract through
@@ -16,16 +14,12 @@ func NewRabbitMQ(url string) (*RabbitMQ, error) {
 }
 
 // ListenFor instructs RabbitMQ to deliver a message for the given topic
-func (r *RabbitMQ) ListenFor(topic string) error {
+func (r *RabbitMQ) ListenFor(topic string, callback MessageFunc) error {
 	return nil
 }
 
-// OnMessage sets the callback function to call when a message is received
-func (r *RabbitMQ) OnMessage(callback MessageFunc) {
-}
-
 // Send sends a message out to RabbitMQ
-func (r *RabbitMQ) Send(message *messages.Message) error {
+func (r *RabbitMQ) Send(message *BinaryMessage) error {
 	return nil
 }
 
