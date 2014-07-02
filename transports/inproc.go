@@ -21,27 +21,23 @@ type InProc struct {
 
 var callbacks = map[string]map[string][]MessageFunc{}
 var queue = make(chan *BinaryMessage)
-var kill = make(chan struct{})
 var lock sync.RWMutex
-var once sync.Once
 
 func processMessages() {
-	once.Do(func() {
-		go func() {
-			for {
-				select {
-				case bm := <-queue:
-					lock.RLock()
-					for _, instance := range callbacks {
-						for _, cb := range instance[bm.topic] {
-							cb(bm)
-						}
+	go func() {
+		for {
+			select {
+			case bm := <-queue:
+				lock.RLock()
+				for _, instance := range callbacks {
+					for _, cb := range instance[bm.topic] {
+						cb(bm)
 					}
-					lock.RUnlock()
 				}
+				lock.RUnlock()
 			}
-		}()
-	})
+		}
+	}()
 }
 
 func init() {
@@ -63,7 +59,7 @@ func (r *InProc) ListenFor(topic string, callback MessageFunc) error {
 	return nil
 }
 
-// Send sends a message out to InProc
+// Send sends a message into the transport
 func (r *InProc) Send(message *BinaryMessage) error {
 	queue <- message
 	return nil
