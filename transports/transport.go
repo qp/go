@@ -9,8 +9,8 @@ var ErrProcessingStarted = errors.New("processing has started. cannot add additi
 // BinaryMessage is used to communicate both the
 // topic of the message and the associated data.
 type BinaryMessage struct {
-	topic string
-	data  []byte
+	Topic string
+	Data  []byte
 }
 
 // MessageFunc is the signature for a Message Received Callback

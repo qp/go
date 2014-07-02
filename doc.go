@@ -1,4 +1,4 @@
-// package qp implements the "QP" protocol found at qp.github.io
+// Package qp implements the "QP" protocol found at qp.github.io
 //
 // The QP protocol allows for agnostic communication with any underlying
 // message queue system. By using QP, you remove technology-dependent

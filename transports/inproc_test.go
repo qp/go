@@ -28,8 +28,8 @@ func TestInProc(t *testing.T) {
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
-			a.Equal(topic, bm.topic)
-			a.Equal(data, bm.data)
+			a.Equal(topic, bm.Topic)
+			a.Equal(data, bm.Data)
 		case <-time.After(100 * time.Millisecond):
 			a.Fail("No message received!")
 		}
@@ -45,8 +45,8 @@ func TestInProc(t *testing.T) {
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
-			a.Equal(topic, bm.topic)
-			a.Equal(data, bm.data)
+			a.Equal(topic, bm.Topic)
+			a.Equal(data, bm.Data)
 		case <-time.After(100 * time.Millisecond):
 			a.Fail("No message received!")
 		}
@@ -74,8 +74,8 @@ func TestInProcMultiple(t *testing.T) {
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
-			a.Equal(topic, bm.topic)
-			a.Equal(data, bm.data)
+			a.Equal(topic, bm.Topic)
+			a.Equal(data, bm.Data)
 		case <-time.After(100 * time.Millisecond):
 			a.Fail("No message received!")
 		}
@@ -94,8 +94,8 @@ func TestInProcMultiple(t *testing.T) {
 	if a.NoError(err) {
 		select {
 		case bm := <-mc:
-			a.Equal(topic, bm.topic)
-			a.Equal(data, bm.data)
+			a.Equal(topic, bm.Topic)
+			a.Equal(data, bm.Data)
 		case <-time.After(100 * time.Millisecond):
 			a.Fail("No message received!")
 		}

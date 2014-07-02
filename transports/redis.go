@@ -96,7 +96,7 @@ func (r *Redis) processMessages() {
 							return
 						}
 						for _, cb := range callbacks {
-							go cb(&BinaryMessage{topic: topic, data: data})
+							go cb(&BinaryMessage{Topic: topic, Data: data})
 						}
 						conn.Close()
 					}

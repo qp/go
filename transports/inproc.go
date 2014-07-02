@@ -30,7 +30,7 @@ func processMessages() {
 			case bm := <-queue:
 				lock.RLock()
 				for _, instance := range callbacks {
-					for _, cb := range instance[bm.topic] {
+					for _, cb := range instance[bm.Topic] {
 						go cb(bm)
 					}
 				}
@@ -62,7 +62,7 @@ func (r *InProc) ListenFor(topic string, callback MessageFunc) error {
 
 // Send sends a message into the transport
 func (r *InProc) Send(topic string, message []byte) error {
-	queue <- &BinaryMessage{topic: topic, data: message}
+	queue <- &BinaryMessage{Topic: topic, Data: message}
 	return nil
 }
 
