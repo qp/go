@@ -44,6 +44,7 @@ func init() {
 	processMessages()
 }
 
+// NewInProc creates a new instance of InProc
 func NewInProc() *InProc {
 	return &InProc{id: uuid.New()}
 }
