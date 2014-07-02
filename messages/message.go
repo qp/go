@@ -10,11 +10,11 @@ import (
 // QP nodes, as well as containing the metadata
 // necessary to implement the pipeline functionality.
 type Message struct {
-	To   utils.StringDES // array of destination addresses
-	From utils.StringDES // array of addresses encountered thus far
-	ID   string          // a UUID identifying this message
-	Data interface{}     // arbitrary data payload
-	Err  interface{}     // arbitrary error payload. nil if no error
+	To   utils.StringDES `json:"to"`            // array of destination addresses
+	From utils.StringDES `json:"from"`          // array of addresses encountered thus far
+	ID   string          `json:"id"`            // a UUID identifying this message
+	Data interface{}     `json:"data"`          // arbitrary data payload
+	Err  interface{}     `json:"err,omitempty"` // arbitrary error payload. nil if no error
 }
 
 // NewMessage creates a new Message object with appropriate fields set.
