@@ -9,7 +9,7 @@ import (
 )
 
 // ensure InProc conforms to Transport interface
-var conformsInProc = Transport(&InProc{})
+var _ Transport = (*InProc)(nil)
 
 func TestInProc(t *testing.T) {
 

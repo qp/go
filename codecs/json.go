@@ -5,7 +5,7 @@ import (
 )
 
 // ensure JSON conforms to Codec
-var conformJSON = Codec(&JSON{})
+var _ Codec = (*JSON)(nil)
 
 // JSON is the JSON implementation of the Codec interface
 type JSON struct{}

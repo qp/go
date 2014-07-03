@@ -6,7 +6,7 @@ import (
 )
 
 // ensure RabbitMQ conforms to Transport interface
-var conformsRabbitMQ = Transport(&RabbitMQ{})
+var _ Transport = (*RabbitMQ)(nil)
 
 // initRabbitMQ does the following:
 // 1. Checks if rabbitmq is installed

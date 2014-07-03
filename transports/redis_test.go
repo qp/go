@@ -10,7 +10,7 @@ import (
 )
 
 // ensure Redis conforms to Transport interface
-var conformsRedis = Transport(&Redis{})
+var _ Transport = (*Redis)(nil)
 
 // initRedis does the following:
 // 1. Checks if Redis is installed
