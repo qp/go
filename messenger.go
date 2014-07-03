@@ -13,8 +13,11 @@ import (
 )
 
 // ListenFunc is the signature for the callback function called when
-// a message is received
-type ListenFunc func(message *messages.Message) error
+// a message is received. If an error occurs during processing,
+// return an object describing the error. It will be assigned
+// to the Err field in the standard message object and returned
+// to the origin server of the message.
+type ListenFunc func(message *messages.Message) interface{}
 
 // Messenger is the entry point into the qp system.
 // It is used to communicate with the underlying queue
@@ -57,31 +60,44 @@ func NewMessenger(name string, codec codecs.Codec, transport transports.Transpor
 		msg := &messages.Message{}
 		err := codec.Unmarshal(bm.Data, msg)
 		if err != nil {
-			// TODO: respond with this error back to the origin
-			fmt.Println("unmarshal error: ", err)
+			// TODO: figure out how to handle this. can't unmarshal means
+			// can't get the origin server. how to respond?
+			return
 		}
+
 		if m.OnRequest != nil {
-			err = m.OnRequest(msg)
-			if err != nil {
-				// TODO: respond with this error back to the origin
-				fmt.Println("request error: ", err)
-			}
+			msg.Err = m.OnRequest(msg)
 		}
-		next := msg.To.Pop()
-		if next == "" {
+		next := ""
+		if msg.Err != nil {
 			next = msg.From[0]
+		} else {
+			next = msg.To.Pop()
+			if next == "" {
+				next = msg.From[0]
+			}
 		}
 		msg.From.BPush(m.fullName)
 
 		bytes, err := m.codec.Marshal(msg)
 		if err != nil {
-			fmt.Println("marshal error: ", err)
-			// TODO: respond with this error to the origin
+			// we can't marshal this msg object for some reason, so
+			// we need to create a new one, set the to, and send what info we can
+			failMsg := messages.NewMessage(m.fullName, nil, msg.From[0])
+			failMsg.Err = map[string]interface{}{"message": "unable to marshal message object"}
+			next = failMsg.To.Pop()
+			failMsg.From.BPush(m.fullName)
+			bytes, err = m.codec.Marshal(msg)
+			if err != nil {
+				// just give up
+				return
+			}
 		}
 		err = m.transport.Send(next, bytes)
 		if err != nil {
 			fmt.Println("send error: ", err)
-			// TODO: respond this error to origin
+			// TODO: figure out how to handle this. cannot send, so can't inform origin
+			// or pass on to next endpoint
 		}
 
 	})
@@ -135,6 +151,14 @@ func (m *Messenger) Request(object interface{}, pipeline ...string) (*Response, 
 
 	return r, nil
 
+}
+
+// Stop deregisters all listening topics
+func (m *Messenger) Stop() {
+	m.transport.Stop()
+	m.lock.Lock()
+	m.requests = nil
+	m.lock.Unlock()
 }
 
 // Name returns the name of this messenger
