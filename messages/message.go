@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"encoding/json"
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/qp/go/utils"
 )
@@ -26,4 +27,10 @@ func NewMessage(serviceName string, data interface{}, to ...string) *Message {
 // HasError returns true if the Err field is set
 func (m *Message) HasError() bool {
 	return m.Err != nil
+}
+
+// String provides a pretty JSON string representation of the message
+func (m *Message) String() string {
+	bytes, _ := json.MarshalIndent(m, "", "  ")
+	return string(bytes)
 }
