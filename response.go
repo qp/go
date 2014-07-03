@@ -1,7 +1,6 @@
 package qp
 
 import (
-	"errors"
 	"time"
 
 	"github.com/qp/go/messages"
@@ -30,6 +29,6 @@ func (r *Response) Message() *messages.Message {
 		return m
 	case <-time.After(r.timeout):
 		// TODO: fire a message to the messenger telling it to delete this from the map
-		return &messages.Message{Err: errors.New("timeout expired while waiting for response")}
+		return &messages.Message{Err: map[string]interface{}{"message": "timeout expired while waiting for response"}}
 	}
 }

@@ -56,9 +56,48 @@ func NewMessenger(name string, codec codecs.Codec, transport transports.Transpor
 		transport: transport,
 	}
 
-	m.transport.ListenFor(name, func(bm *transports.BinaryMessage) {
+	return m
+}
+
+// Request makes a new request to the given destination pipeline.
+// The pipeline can be one or many destinations. If multiple arguments
+// are given, the individual endpoints are visited, in order, and each
+// has an opportunity to act on the request before forwarding it on.
+// When the final destination is reached, it will send the response directly
+// back to this service.
+//
+// The returned Response object provides a future through which you can wait on
+// the response Message object.
+func (m *Messenger) Request(object interface{}, pipeline ...string) (*Response, error) {
+	stack := utils.StringDES(pipeline)
+	to := stack.Pop()
+	msg := messages.NewMessage(m.fullName, object, stack...)
+	bytes, err := m.codec.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = m.transport.Send(to, bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	r := newResponse(1 * time.Second)
+	m.lock.Lock()
+	m.requests[msg.ID] = r
+	m.lock.Unlock()
+
+	return r, nil
+
+}
+
+// Start subscribes to default topics and
+// begins processing messages through the
+// transport
+func (m *Messenger) Start() {
+	m.transport.ListenFor(m.name, func(bm *transports.BinaryMessage) {
 		msg := &messages.Message{}
-		err := codec.Unmarshal(bm.Data, msg)
+		err := m.codec.Unmarshal(bm.Data, msg)
 		if err != nil {
 			// TODO: figure out how to handle this. can't unmarshal means
 			// can't get the origin server. how to respond?
@@ -104,7 +143,7 @@ func NewMessenger(name string, codec codecs.Codec, transport transports.Transpor
 
 	m.transport.ListenFor(m.fullName, func(bm *transports.BinaryMessage) {
 		msg := &messages.Message{}
-		err := codec.Unmarshal(bm.Data, msg)
+		err := m.codec.Unmarshal(bm.Data, msg)
 		if err != nil {
 			fmt.Println("unmarshal error in direct: ", err)
 			// TODO: pack this error into the error field of a new msg object
@@ -118,39 +157,7 @@ func NewMessenger(name string, codec codecs.Codec, transport transports.Transpor
 		r.response <- msg
 	})
 
-	return m
-}
-
-// Request makes a new request to the given destination pipeline.
-// The pipeline can be one or many destinations. If multiple arguments
-// are given, the individual endpoints are visited, in order, and each
-// has an opportunity to act on the request before forwarding it on.
-// When the final destination is reached, it will send the response directly
-// back to this service.
-//
-// The returned Response object provides a future through which you can wait on
-// the response Message object.
-func (m *Messenger) Request(object interface{}, pipeline ...string) (*Response, error) {
-	stack := utils.StringDES(pipeline)
-	to := stack.Pop()
-	msg := messages.NewMessage(m.fullName, object, stack...)
-	bytes, err := m.codec.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = m.transport.Send(to, bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	r := newResponse(1 * time.Second)
-	m.lock.Lock()
-	m.requests[msg.ID] = r
-	m.lock.Unlock()
-
-	return r, nil
-
+	m.transport.Start()
 }
 
 // Stop deregisters all listening topics

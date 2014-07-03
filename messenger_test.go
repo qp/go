@@ -1,7 +1,7 @@
 package qp
 
 import (
-	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
 	"testing"
@@ -24,7 +24,7 @@ func TestMessenger(t *testing.T) {
 			message.Data.(map[string]interface{})["second"] = true
 			return nil
 		}
-		return errors.New("message was empty")
+		return map[string]interface{}{"code": 123, "message": "message was empty"}
 	}
 
 	m3 := NewMessenger("third", &codecs.JSON{}, transports.NewInProc())
@@ -33,14 +33,18 @@ func TestMessenger(t *testing.T) {
 			message.Data.(map[string]interface{})["third"] = true
 			return nil
 		}
-		return errors.New("message was empty")
+		return map[string]interface{}{"code": 123, "message": "message was empty"}
 	}
+
+	m1.Start()
+	m2.Start()
+	m3.Start()
 
 	r, err := m1.Request(map[string]interface{}{"first": true}, "second", "third")
 
 	if a.NotNil(r) && a.NoError(err) {
 		msg := r.Message()
-		if a.False(msg.HasError()) {
+		if a.False(msg.HasError(), fmt.Sprintf("%v", msg.Err)) {
 			data := msg.Data.(map[string]interface{})
 			a.True(data["first"].(bool))
 			a.True(data["second"].(bool))
@@ -67,7 +71,7 @@ func TestMessengerError(t *testing.T) {
 			message.Data.(map[string]interface{})["second"] = true
 			return nil
 		}
-		return errors.New("message was empty")
+		return map[string]interface{}{"code": 123, "message": "message was empty"}
 	}
 
 	m3 := NewMessenger("third", &codecs.JSON{}, transports.NewInProc())
@@ -76,11 +80,15 @@ func TestMessengerError(t *testing.T) {
 		return map[string]interface{}{"code": 123, "message": "deliberate failure"}
 	}
 
+	m1.Start()
+	m2.Start()
+	m3.Start()
+
 	r, err := m1.Request(map[string]interface{}{"first": true}, "second", "third")
 
 	if a.NotNil(r) && a.NoError(err) {
 		msg := r.Message()
-		if a.True(msg.HasError()) {
+		if a.True(msg.HasError(), fmt.Sprintf("%v", msg.Err)) {
 			err := msg.Err.(map[string]interface{})
 			a.Equal(err["code"], 123)
 			a.Equal(err["message"], "deliberate failure")
@@ -127,31 +135,35 @@ func TestMessengerRedis(t *testing.T) {
 	initRedis()
 	a := assert.New(t)
 
-	m1 := NewMessenger("first", &codecs.JSON{}, transports.NewInProc())
+	m1 := NewMessenger("first", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
 
-	m2 := NewMessenger("second", &codecs.JSON{}, transports.NewInProc())
+	m2 := NewMessenger("second", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
 	m2.OnRequest = func(message *messages.Message) interface{} {
 		if a.NotNil(message) {
 			message.Data.(map[string]interface{})["second"] = true
 			return nil
 		}
-		return errors.New("message was empty")
+		return map[string]interface{}{"code": 123, "message": "message was empty"}
 	}
 
-	m3 := NewMessenger("third", &codecs.JSON{}, transports.NewInProc())
+	m3 := NewMessenger("third", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
 	m3.OnRequest = func(message *messages.Message) interface{} {
 		if a.NotNil(message) {
 			message.Data.(map[string]interface{})["third"] = true
 			return nil
 		}
-		return errors.New("message was empty")
+		return map[string]interface{}{"code": 123, "message": "message was empty"}
 	}
+
+	m1.Start()
+	m2.Start()
+	m3.Start()
 
 	r, err := m1.Request(map[string]interface{}{"first": true}, "second", "third")
 
 	if a.NotNil(r) && a.NoError(err) {
 		msg := r.Message()
-		if a.False(msg.HasError()) {
+		if a.False(msg.HasError(), fmt.Sprintf("%v", msg.Err)) {
 			data := msg.Data.(map[string]interface{})
 			a.True(data["first"].(bool))
 			a.True(data["second"].(bool))
@@ -172,22 +184,26 @@ func TestMessengerErrorRedis(t *testing.T) {
 	initRedis()
 	a := assert.New(t)
 
-	m1 := NewMessenger("first", &codecs.JSON{}, transports.NewInProc())
+	m1 := NewMessenger("first", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
 
-	m2 := NewMessenger("second", &codecs.JSON{}, transports.NewInProc())
+	m2 := NewMessenger("second", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
 	m2.OnRequest = func(message *messages.Message) interface{} {
 		if a.NotNil(message) {
 			message.Data.(map[string]interface{})["second"] = true
 			return nil
 		}
-		return errors.New("message was empty")
+		return map[string]interface{}{"code": 123, "message": "message was empty"}
 	}
 
-	m3 := NewMessenger("third", &codecs.JSON{}, transports.NewInProc())
+	m3 := NewMessenger("third", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
 	m3.OnRequest = func(message *messages.Message) interface{} {
 		// an error can be any object
 		return map[string]interface{}{"code": 123, "message": "deliberate failure"}
 	}
+
+	m1.Start()
+	m2.Start()
+	m3.Start()
 
 	r, err := m1.Request(map[string]interface{}{"first": true}, "second", "third")
 
