@@ -1,16 +1,10 @@
 package transports
 
-import "errors"
-
-// ErrProcessingStarted is returned when additional listeners are added
-// after processing has begun
-var ErrProcessingStarted = errors.New("processing has started. cannot add additional listeners")
-
 // BinaryMessage is used to communicate both the
 // topic of the message and the associated data.
 type BinaryMessage struct {
-	Topic string
-	Data  []byte
+	Channel string
+	Data    []byte
 }
 
 // MessageFunc is the signature for a Message Received Callback
@@ -20,13 +14,7 @@ type MessageFunc func(bm *BinaryMessage)
 // for interacting with an underlying transport technology
 // such as nsq or rabbitmq.
 type Transport interface {
-	// listen for a message on the given topic and
-	// calls the given callback function when a message is
-	// received. The callback function is fired in its own
-	// goroutine to minimize latency at the transport level.
-	ListenFor(topic string, callback MessageFunc) error
-	Send(topic string, message []byte) error // send a message to the queue
-	// Start processing messages. Dial the underlying transport if necessary.
-	Start() error
-	Stop() // gracefully stop processing messages
+	Send(to string, data []byte) error
+	ListenFor(topic string)
+	OnMessage(MessageFunc)
 }
