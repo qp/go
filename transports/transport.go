@@ -1,7 +1,7 @@
 package transports
 
 // BinaryMessage is used to communicate both the
-// topic of the message and the associated data.
+// channel of the message and the associated data.
 type BinaryMessage struct {
 	Channel string
 	Data    []byte
@@ -15,6 +15,8 @@ type MessageFunc func(bm *BinaryMessage)
 // such as nsq or rabbitmq.
 type Transport interface {
 	Send(to string, data []byte) error
-	ListenFor(topic string)
-	OnMessage(MessageFunc)
+	ListenFor(channel string)
+	OnMessage(messageFunc MessageFunc)
+	Start() error
+	Stop()
 }

@@ -7,13 +7,15 @@ package qp
 type ResponseFuture struct {
 	id       string
 	response chan *Response
+	cached   *Response
+	fetched  chan struct{}
 }
 
 // makeResponseFuture creates a new response future that
 // is initialized appropriately for waiting on an incoming
 // response.
 func makeResponseFuture(id string) *ResponseFuture {
-	return &ResponseFuture{id: id, response: make(chan *Response)}
+	return &ResponseFuture{id: id, response: make(chan *Response), fetched: make(chan struct{})}
 }
 
 // Response uses a future mechanism to retrieve the response.
@@ -24,5 +26,11 @@ func makeResponseFuture(id string) *ResponseFuture {
 // There is no timeout. It will block indefinitely. This may
 // change in the future.
 func (r *ResponseFuture) Response() *Response {
-	return <-r.response
+	select {
+	case <-r.fetched:
+		return r.cached
+	case r.cached = <-r.response:
+		close(r.fetched)
+		return r.cached
+	}
 }
