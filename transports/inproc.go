@@ -1,12 +1,8 @@
 package transports
 
-import (
-	"sync"
+import "sync"
 
-	"code.google.com/p/go-uuid/uuid"
-)
-
-type instanceID string
+type instanceID uint64
 
 // InProc is the InProc implementation of the
 // Transport interface.
@@ -17,17 +13,16 @@ type instanceID string
 // initial development and testing. When ready, it requires
 // minimal effort to split each service into separate
 // processes.
+//
+// InProc should only be used for request and reply, not
+// events.
 type InProc struct {
-	id instanceID
-}
-
-type inProcMapper struct {
-	channels []string
 	callback MessageFunc
+	wrapped  Transport
 }
 
 var queue = make(chan *BinaryMessage)
-var maps = map[instanceID]*inProcMapper{}
+var channels = map[string][]*InProc{}
 var lock sync.RWMutex
 
 func processMessages() {
@@ -36,13 +31,14 @@ func processMessages() {
 			select {
 			case bm := <-queue:
 				lock.RLock()
-				for _, mapper := range maps {
-					for _, channel := range mapper.channels {
-						if channel == bm.Channel {
-							go mapper.callback(bm)
-						}
+				if instances, ok := channels[bm.Channel]; ok {
+					for _, instance := range instances {
+						go instance.callback(bm)
 					}
+				} else {
+					// nothing found. forward to wrapped transport
 				}
+
 				lock.RUnlock()
 			}
 		}
@@ -54,40 +50,37 @@ func init() {
 }
 
 // MakeInProc creates a new instance of InProc
-func MakeInProc() Transport {
-	return &InProc{id: instanceID(uuid.New())}
+func MakeInProc(wrapped Transport) Transport {
+	return &InProc{wrapped: wrapped}
 }
 
 // ListenFor instructs InProc to deliver a message for the given channel
 func (i *InProc) ListenFor(channel string) {
 	// listen on a channel
-	if _, ok := maps[i.id]; !ok {
-		lock.Lock()
-		maps[i.id] = &inProcMapper{}
-		lock.Unlock()
-	}
 	lock.Lock()
-	maps[i.id].channels = append(maps[i.id].channels, channel)
+	channels[channel] = append(channels[channel], i)
 	lock.Unlock()
+	i.wrapped.ListenFor(channel)
 }
 
 // OnMessage assigns a callback function to be called when a message
 // is received on this transport
 func (i *InProc) OnMessage(messageFunc MessageFunc) {
 	// assign the callback to be called
-	if _, ok := maps[i.id]; !ok {
-		lock.Lock()
-		maps[i.id] = &inProcMapper{}
-		lock.Unlock()
-	}
-	lock.Lock()
-	maps[i.id].callback = messageFunc
-	lock.Unlock()
+	i.callback = messageFunc
+	i.wrapped.OnMessage(messageFunc)
 }
 
 // Send sends a message into the transport
 func (i *InProc) Send(channel string, message []byte) error {
-	queue <- &BinaryMessage{Channel: channel, Data: message}
+	lock.RLock()
+	_, ok := channels[channel]
+	lock.RUnlock()
+	if ok {
+		queue <- &BinaryMessage{Channel: channel, Data: message}
+	} else {
+		return i.wrapped.Send(channel, message)
+	}
 	return nil
 }
 
@@ -96,6 +89,6 @@ func (i *InProc) Start() error {
 	return nil
 }
 
-// Stop removes all callbacks for this instance of InProc
+// Stop is a no-op for the InProc transport.
 func (i *InProc) Stop() {
 }
