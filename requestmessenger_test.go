@@ -10,8 +10,8 @@ import (
 
 func TestRequestMessengerInProc(t *testing.T) {
 
-	rm := MakeRequestMessenger("test", "inproc", codecs.MakeJSON(), transports.MakeInProc())
-	rm2 := MakeRequestMessenger("test2", "inproc2", codecs.MakeJSON(), transports.MakeInProc())
+	rm := MakeRequestMessenger("test", "inproc", codecs.MakeJSON(), transports.MakeInProc(transports.MakeLog(true)))
+	rm2 := MakeRequestMessenger("test2", "inproc2", codecs.MakeJSON(), transports.MakeInProc(transports.MakeLog(true)))
 	if assert.NotNil(t, rm) && assert.NotNil(t, rm2) {
 		rm.OnRequest(func(channel string, request *Request) {
 			request.Data = "hello from handler"
@@ -31,10 +31,10 @@ func TestRequestMessengerInProc(t *testing.T) {
 
 func TestRequestMessengerInProcMultipleJumps(t *testing.T) {
 
-	rm := MakeRequestMessenger("multitest", "inproc", codecs.MakeJSON(), transports.MakeInProc())
-	s1 := MakeRequestMessenger("one", "inproc", codecs.MakeJSON(), transports.MakeInProc())
-	s2 := MakeRequestMessenger("two", "inproc", codecs.MakeJSON(), transports.MakeInProc())
-	s3 := MakeRequestMessenger("three", "inproc", codecs.MakeJSON(), transports.MakeInProc())
+	rm := MakeRequestMessenger("multitest", "inproc", codecs.MakeJSON(), transports.MakeInProc(transports.MakeLog(true)))
+	s1 := MakeRequestMessenger("one", "inproc", codecs.MakeJSON(), transports.MakeInProc(transports.MakeLog(true)))
+	s2 := MakeRequestMessenger("two", "inproc", codecs.MakeJSON(), transports.MakeInProc(transports.MakeLog(true)))
+	s3 := MakeRequestMessenger("three", "inproc", codecs.MakeJSON(), transports.MakeInProc(transports.MakeLog(true)))
 
 	if assert.NotNil(t, rm) &&
 		assert.NotNil(t, s1) &&
