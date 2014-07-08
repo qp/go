@@ -16,9 +16,9 @@ func makeMapper() *mapper {
 }
 
 func (m *mapper) track(id string, handler RequestHandler) {
-	m.lock.RLock()
+	m.lock.Lock()
 	m.items[id] = append(m.items[id], handler)
-	m.lock.RUnlock()
+	m.lock.Unlock()
 
 }
 func (m *mapper) find(id string) []RequestHandler {

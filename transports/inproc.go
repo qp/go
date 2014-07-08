@@ -62,7 +62,9 @@ func MakeInProc() Transport {
 func (i *InProc) ListenFor(channel string) {
 	// listen on a channel
 	if _, ok := maps[i.id]; !ok {
+		lock.Lock()
 		maps[i.id] = &inProcMapper{}
+		lock.Unlock()
 	}
 	lock.Lock()
 	maps[i.id].channels = append(maps[i.id].channels, channel)
@@ -74,7 +76,9 @@ func (i *InProc) ListenFor(channel string) {
 func (i *InProc) OnMessage(messageFunc MessageFunc) {
 	// assign the callback to be called
 	if _, ok := maps[i.id]; !ok {
+		lock.Lock()
 		maps[i.id] = &inProcMapper{}
+		lock.Unlock()
 	}
 	lock.Lock()
 	maps[i.id].callback = messageFunc
