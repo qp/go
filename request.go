@@ -16,5 +16,5 @@ func newID() string {
 
 // MakeRequest makes a new request object and generates a unique ID in the from array.
 func MakeRequest(endpoint string, object interface{}, pipeline ...string) *Request {
-	return &Request{To: pipeline, Response: MakeResponse(endpoint, object, newID())}
+	return &Request{To: pipeline, Response: makeResponse(endpoint, object, newID())}
 }

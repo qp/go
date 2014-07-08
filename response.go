@@ -8,8 +8,8 @@ type Response struct {
 	Data interface{} `json:"data"` // arbitrary data payload
 }
 
-// MakeResponse makes a new response object and generates a unique ID in the
+// makeResponse makes a new response object and generates a unique ID in the
 // from array.
-func MakeResponse(endpoint string, object interface{}, id string) *Response {
+func makeResponse(endpoint string, object interface{}, id string) *Response {
 	return &Response{From: []string{endpoint}, ID: id, Data: object}
 }
