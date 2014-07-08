@@ -1,9 +1,6 @@
 package qp
 
-import (
-	"strconv"
-	"sync/atomic"
-)
+import "github.com/qp/go/utils"
 
 // Request defines all the fields and information
 // in the standard qp request object. It is used
@@ -13,16 +10,7 @@ type Request struct {
 	To []string `json:"to"` // array of destination addresses
 }
 
-var unique uint64
-
-// newID returns a string representation of an atomically incrementing
-// uint64.
-func newID() string {
-	id := atomic.AddUint64(&unique, 1)
-	return strconv.FormatUint(id, 10)
-}
-
 // MakeRequest makes a new request object and generates a unique ID in the from array.
 func MakeRequest(endpoint string, object interface{}, pipeline ...string) *Request {
-	return &Request{To: pipeline, Response: makeResponse(endpoint, object, newID())}
+	return &Request{To: pipeline, Response: makeResponse(endpoint, object, utils.UniqueStringID())}
 }
