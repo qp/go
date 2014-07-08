@@ -31,14 +31,9 @@ func processMessages() {
 			select {
 			case bm := <-queue:
 				lock.RLock()
-				if instances, ok := channels[bm.Channel]; ok {
-					for _, instance := range instances {
-						go instance.callback(bm)
-					}
-				} else {
-					// nothing found. forward to wrapped transport
+				for _, instance := range channels[bm.Channel] {
+					go instance.callback(bm)
 				}
-
 				lock.RUnlock()
 			}
 		}
