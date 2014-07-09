@@ -76,11 +76,13 @@ func (r *Redis) Stop() {
 	close(r.kill)
 	r.kill = make(chan struct{})
 	r.once = sync.Once{}
-	r.listeners = []string{}
 }
 
 func (r *Redis) processMessages() {
-	for _, c := range r.listeners {
+	r.lock.Lock()
+	listeners := r.listeners
+	r.lock.Unlock()
+	for _, c := range listeners {
 		go func(channel string) {
 			var data []byte
 			for {
@@ -100,13 +102,13 @@ func (r *Redis) processMessages() {
 							}
 						}
 						// Not a timeout? Something went wrong.
-						// TODO: handle this appropriately
+						// TODO: Log this out.. maybe fire a metric to the logging endpoint
 						conn.Close()
 						return
 					}
 					if _, err := redis.Scan(message, &channel, &data); err != nil {
 						// there was an error decoding the message into the data field
-						// TODO: handle this appropriately
+						// TODO: Log this out.. maybe fire a metric to the logging endpoint
 						conn.Close()
 						return
 					}
