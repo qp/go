@@ -1,22 +1,48 @@
 package transports
 
-// BinaryMessage is used to communicate both the
-// channel of the message and the associated data.
-type BinaryMessage struct {
-	Channel string
-	Data    []byte
+import (
+	"github.com/qp/go/transports/common"
+	"github.com/qp/go/transports/request"
+)
+
+// Kind is a type used to define what kind of
+// transport to create in the Make* functions.
+type Kind uint8
+
+const (
+	// KindRequest specifies a "Request" transport
+	KindRequest Kind = iota
+	// KindEvent pecifies an "Event" transport
+	KindEvent
+)
+
+// MakeInProc creates a new instance of an InProc transport
+// of the given Kind
+func MakeInProc(kind Kind, wrapped common.Transport) common.Transport {
+	switch kind {
+	case KindRequest:
+		return request.MakeInProc(wrapped)
+	case KindEvent:
+	}
+	return nil
 }
 
-// MessageFunc is the signature for a Message Received Callback
-type MessageFunc func(bm *BinaryMessage)
+// MakeLog makes and initializes a new log transport of the given kind
+func MakeLog(kind Kind, quiet bool) common.Transport {
+	switch kind {
+	case KindRequest:
+		return request.MakeLog(quiet)
+	case KindEvent:
+	}
+	return nil
+}
 
-// Transport is an interface declaring functions used
-// for interacting with an underlying transport technology
-// such as nsq or rabbitmq.
-type Transport interface {
-	Send(to string, data []byte) error
-	ListenFor(channel string)
-	OnMessage(messageFunc MessageFunc)
-	Start() error
-	Stop()
+// MakeRedis initializes a new Redis transport instance of the given kind
+func MakeRedis(kind Kind, url string) common.Transport {
+	switch kind {
+	case KindRequest:
+		return request.MakeRedis(url)
+	case KindEvent:
+	}
+	return nil
 }

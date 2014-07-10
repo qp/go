@@ -5,7 +5,7 @@ import (
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/qp/go/codecs"
-	"github.com/qp/go/transports"
+	"github.com/qp/go/transports/common"
 )
 
 // RequestHandler defines the function signature for the callback
@@ -20,14 +20,14 @@ type RequestMessenger struct {
 	name         string
 	responseName string
 	codec        codecs.Codec
-	transport    transports.Transport
+	transport    common.Transport
 	resolver     *resolver
 	mapper       *mapper
 }
 
 // MakeRequestMessenger creates a new request messenger to be used for interacting with
 // the qp system.
-func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transport transports.Transport) *RequestMessenger {
+func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transport common.Transport) *RequestMessenger {
 	if responseName == "" {
 		responseName = uuid.New()
 	}
@@ -43,7 +43,7 @@ func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transpo
 	// listen on the "responseName" responseName
 	r.transport.ListenFor(r.responseName)
 
-	r.transport.OnMessage(func(bm *transports.BinaryMessage) {
+	r.transport.OnMessage(func(bm *common.BinaryMessage) {
 		// switch on the bm.channel to determine the type of message
 		if bm.Channel == r.responseName {
 			// decode to response object

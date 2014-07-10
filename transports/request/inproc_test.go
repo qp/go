@@ -1,27 +1,28 @@
-package transports
+package request
 
 import (
 	"encoding/json"
 	"testing"
 	"time"
 
+	"github.com/qp/go/transports/common"
 	"github.com/stretchr/testify/assert"
 )
 
 // ensure InProc conforms to Transport interface
-var _ Transport = (*InProc)(nil)
+var _ common.Transport = (*InProc)(nil)
 
 func TestInProc(t *testing.T) {
 
 	ip := MakeInProc(MakeLog(true))
 	a := assert.New(t)
 	channel := "test"
-	mc := make(chan *BinaryMessage)
+	mc := make(chan *common.BinaryMessage)
 
 	data, _ := json.Marshal(map[string]interface{}{"name": "Tyler"})
 
 	ip.ListenFor(channel)
-	ip.OnMessage(func(bm *BinaryMessage) {
+	ip.OnMessage(func(bm *common.BinaryMessage) {
 		mc <- bm
 	})
 	ip.Start()
@@ -39,7 +40,7 @@ func TestInProc(t *testing.T) {
 
 	// make sure we can start again after stopping
 	ip.ListenFor(channel)
-	ip.OnMessage(func(bm *BinaryMessage) {
+	ip.OnMessage(func(bm *common.BinaryMessage) {
 		mc <- bm
 	})
 
@@ -65,12 +66,12 @@ func TestInProcMultiple(t *testing.T) {
 	a := assert.New(t)
 
 	channel := "test"
-	mc := make(chan *BinaryMessage)
+	mc := make(chan *common.BinaryMessage)
 
 	data, _ := json.Marshal(map[string]interface{}{"name": "Tyler"})
 
 	ip.ListenFor(channel)
-	ip.OnMessage(func(bm *BinaryMessage) {
+	ip.OnMessage(func(bm *common.BinaryMessage) {
 		mc <- bm
 	})
 
@@ -87,7 +88,7 @@ func TestInProcMultiple(t *testing.T) {
 
 	ip2 := MakeInProc(MakeLog(true))
 	ip2.ListenFor(channel)
-	ip2.OnMessage(func(bm *BinaryMessage) {
+	ip2.OnMessage(func(bm *common.BinaryMessage) {
 		mc <- bm
 	})
 

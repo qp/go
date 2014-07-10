@@ -1,6 +1,10 @@
-package transports
+package request
 
-import "log"
+import (
+	"log"
+
+	"github.com/qp/go/transports/common"
+)
 
 // Log implements a transport that simply logs
 // activity to console.
@@ -9,7 +13,7 @@ type Log struct {
 }
 
 // MakeLog makes and initializes a new log transport
-func MakeLog(quiet bool) Transport {
+func MakeLog(quiet bool) common.Transport {
 	return &Log{quiet: quiet}
 }
 
@@ -31,7 +35,7 @@ func (l *Log) ListenFor(channel string) {
 }
 
 // OnMessage logs activity
-func (l *Log) OnMessage(messageFunc MessageFunc) {
+func (l *Log) OnMessage(messageFunc common.MessageFunc) {
 	l.shouldLog("OnMessage")
 }
 
