@@ -59,7 +59,9 @@ func (i *InProc) ListenFor(channel string) {
 	lock.Lock()
 	channels[channel] = append(channels[channel], i)
 	lock.Unlock()
-	i.wrapped.ListenFor(channel)
+	if i.wrapped != nil {
+		i.wrapped.ListenFor(channel)
+	}
 }
 
 // OnMessage assigns a callback function to be called when a message
@@ -67,7 +69,9 @@ func (i *InProc) ListenFor(channel string) {
 func (i *InProc) OnMessage(messageFunc common.MessageFunc) {
 	// assign the callback to be called
 	i.callback = messageFunc
-	i.wrapped.OnMessage(messageFunc)
+	if i.wrapped != nil {
+		i.wrapped.OnMessage(messageFunc)
+	}
 }
 
 // Send sends a message into the transport
@@ -78,7 +82,9 @@ func (i *InProc) Send(channel string, message []byte) error {
 	if ok {
 		queue <- &common.BinaryMessage{Channel: channel, Data: message}
 	} else {
-		return i.wrapped.Send(channel, message)
+		if i.wrapped != nil {
+			return i.wrapped.Send(channel, message)
+		}
 	}
 	return nil
 }

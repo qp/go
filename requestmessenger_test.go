@@ -21,7 +21,7 @@ var tests = []struct {
 		name: "InProc",
 		pre:  func() bool { return true },
 		transport: func() common.Transport {
-			return transports.MakeInProc(transports.KindRequest, transports.MakeLog(transports.KindRequest, true))
+			return transports.MakeInProc(transports.KindRequest, nil)
 		},
 		post: func() {},
 	},
