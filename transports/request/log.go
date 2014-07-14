@@ -13,7 +13,7 @@ type Log struct {
 }
 
 // MakeLog makes and initializes a new log transport
-func MakeLog(quiet bool) transports.Transport {
+func MakeLog(quiet bool) transports.RequestTransport {
 	return &Log{quiet: quiet}
 }
 

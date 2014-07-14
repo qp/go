@@ -20,14 +20,14 @@ type RequestMessenger struct {
 	name         string
 	responseName string
 	codec        codecs.Codec
-	transport    transports.Transport
+	transport    transports.RequestTransport
 	resolver     *resolver
 	mapper       *mapper
 }
 
 // MakeRequestMessenger creates a new request messenger to be used for interacting with
 // the qp system.
-func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transport transports.Transport) *RequestMessenger {
+func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transport transports.RequestTransport) *RequestMessenger {
 	if responseName == "" {
 		responseName = uuid.New()
 	}

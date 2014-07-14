@@ -11,7 +11,7 @@ import (
 )
 
 // ensure Redis conforms to Transport interface
-var _ transports.Transport = (*Redis)(nil)
+var _ transports.RequestTransport = (*Redis)(nil)
 
 // initRedis does the following:
 // 1. Checks if Redis is installed

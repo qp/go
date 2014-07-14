@@ -10,7 +10,7 @@ import (
 )
 
 // ensure InProc conforms to Transport interface
-var _ transports.Transport = (*InProc)(nil)
+var _ transports.RequestTransport = (*InProc)(nil)
 
 func TestInProc(t *testing.T) {
 

@@ -1,8 +1,8 @@
 package request
 
 import (
-	"sync"
 	"github.com/qp/go/transports"
+	"sync"
 )
 
 type instanceID uint64
@@ -21,7 +21,7 @@ type instanceID uint64
 // events.
 type InProc struct {
 	callback transports.MessageFunc
-	wrapped  transports.Transport
+	wrapped  transports.RequestTransport
 }
 
 var queue = make(chan *transports.BinaryMessage)
@@ -48,7 +48,7 @@ func init() {
 }
 
 // MakeInProc creates a new instance of InProc
-func MakeInProc(wrapped transports.Transport) transports.Transport {
+func MakeInProc(wrapped transports.RequestTransport) transports.RequestTransport {
 	return &InProc{wrapped: wrapped}
 }
 

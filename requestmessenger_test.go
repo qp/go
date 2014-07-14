@@ -14,13 +14,13 @@ import (
 var tests = []struct {
 	name      string
 	pre       func() bool
-	transport func() transports.Transport
+	transport func() transports.RequestTransport
 	post      func()
 }{
 	{
 		name: "InProc",
 		pre:  func() bool { return true },
-		transport: func() transports.Transport {
+		transport: func() transports.RequestTransport {
 			return request.MakeInProc(nil)
 		},
 		post: func() {},
@@ -43,7 +43,7 @@ var tests = []struct {
 			}
 			return true
 		},
-		transport: func() transports.Transport {
+		transport: func() transports.RequestTransport {
 			return request.MakeRedis("127.0.0.1:6379")
 		},
 		post: func() { exec.Command("redis-cli", "shutdown").Run() },

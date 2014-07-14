@@ -21,7 +21,7 @@ type Redis struct {
 }
 
 // MakeRedis initializes a new Redis transport instance
-func MakeRedis(url string) transports.Transport {
+func MakeRedis(url string) transports.RequestTransport {
 	var pool = &redis.Pool{
 		MaxIdle:     8,
 		IdleTimeout: 240 * time.Second,

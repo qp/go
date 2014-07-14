@@ -14,9 +14,22 @@ type MessageFunc func(bm *BinaryMessage)
 // for interacting with an underlying transport technology
 // such as nsq or rabbitmq.
 type Transport interface {
-	Send(to string, data []byte) error
-	ListenFor(channel string)
-	OnMessage(messageFunc MessageFunc)
 	Start() error
 	Stop()
+	ListenFor(channel string)
+	OnMessage(messageFunc MessageFunc)
+}
+
+// RequestTransport extends Transport to provide a way to
+// send messages to a given endpoint.
+type RequestTransport interface {
+	Transport
+	Send(to string, data []byte) error
+}
+
+// EventTransport extends Transport to provide a way to
+// publish messages to subscribed listeners.
+type EventTransport interface {
+	Transport
+	Publish(to string, data []byte) error
 }

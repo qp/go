@@ -23,7 +23,7 @@ type instanceID uint64
 // events.
 type InProc struct {
 	callback transports.MessageFunc
-	wrapped  transports.Transport
+	wrapped  transports.EventTransport
 }
 
 var queue = make(chan *transports.BinaryMessage)
@@ -54,7 +54,7 @@ func init() {
 }
 
 // MakeInProc creates a new instance of InProc
-func MakeInProc(wrapped transports.Transport) transports.Transport {
+func MakeInProc(wrapped transports.EventTransport) transports.EventTransport {
 	return &InProc{wrapped: wrapped}
 }
 
@@ -82,8 +82,8 @@ func (i *InProc) OnMessage(messageFunc transports.MessageFunc) {
 	}
 }
 
-// Send sends a message into the transport
-func (i *InProc) Send(channel string, message []byte) error {
+// Publish sends a message into the transport
+func (i *InProc) Publish(channel string, message []byte) error {
 	lock.RLock()
 	_, ok := channels[channel]
 	lock.RUnlock()
@@ -91,7 +91,7 @@ func (i *InProc) Send(channel string, message []byte) error {
 		queue <- &transports.BinaryMessage{Channel: channel, Data: message}
 	} else {
 		if i.wrapped != nil {
-			return i.wrapped.Send(channel, message)
+			return i.wrapped.Publish(channel, message)
 		}
 	}
 	return nil
