@@ -2,8 +2,7 @@ package request
 
 import (
 	"sync"
-
-	"github.com/qp/go/transports/common"
+	"github.com/qp/go/transports"
 )
 
 type instanceID uint64
@@ -21,11 +20,11 @@ type instanceID uint64
 // InProc should only be used for request and reply, not
 // events.
 type InProc struct {
-	callback common.MessageFunc
-	wrapped  common.Transport
+	callback transports.MessageFunc
+	wrapped  transports.Transport
 }
 
-var queue = make(chan *common.BinaryMessage)
+var queue = make(chan *transports.BinaryMessage)
 var channels = map[string][]*InProc{}
 var lock sync.RWMutex
 
@@ -49,7 +48,7 @@ func init() {
 }
 
 // MakeInProc creates a new instance of InProc
-func MakeInProc(wrapped common.Transport) common.Transport {
+func MakeInProc(wrapped transports.Transport) transports.Transport {
 	return &InProc{wrapped: wrapped}
 }
 
@@ -66,7 +65,7 @@ func (i *InProc) ListenFor(channel string) {
 
 // OnMessage assigns a callback function to be called when a message
 // is received on this transport
-func (i *InProc) OnMessage(messageFunc common.MessageFunc) {
+func (i *InProc) OnMessage(messageFunc transports.MessageFunc) {
 	// assign the callback to be called
 	i.callback = messageFunc
 	if i.wrapped != nil {
@@ -80,7 +79,7 @@ func (i *InProc) Send(channel string, message []byte) error {
 	_, ok := channels[channel]
 	lock.RUnlock()
 	if ok {
-		queue <- &common.BinaryMessage{Channel: channel, Data: message}
+		queue <- &transports.BinaryMessage{Channel: channel, Data: message}
 	} else {
 		if i.wrapped != nil {
 			return i.wrapped.Send(channel, message)

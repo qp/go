@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qp/go/transports/common"
+	"github.com/qp/go/transports"
 	"github.com/stretchr/testify/assert"
 )
 
 // ensure Redis conforms to Transport interface
-var _ common.Transport = (*Redis)(nil)
+var _ transports.Transport = (*Redis)(nil)
 
 // initRedis does the following:
 // 1. Checks if Redis is installed
@@ -47,12 +47,12 @@ func TestRedis(t *testing.T) {
 	r := MakeRedis("127.0.0.1:6379")
 	a := assert.New(t)
 	channel := "test"
-	mc := make(chan *common.BinaryMessage)
+	mc := make(chan *transports.BinaryMessage)
 
 	data, _ := json.Marshal(map[string]interface{}{"name": "Tyler"})
 
 	r.ListenFor(channel)
-	r.OnMessage(func(bm *common.BinaryMessage) {
+	r.OnMessage(func(bm *transports.BinaryMessage) {
 		mc <- bm
 	})
 	r.Start()
@@ -70,7 +70,7 @@ func TestRedis(t *testing.T) {
 
 	// make sure we can start again after stopping
 	r.ListenFor(channel)
-	r.OnMessage(func(bm *common.BinaryMessage) {
+	r.OnMessage(func(bm *transports.BinaryMessage) {
 		mc <- bm
 	})
 

@@ -3,7 +3,7 @@ package request
 import (
 	"log"
 
-	"github.com/qp/go/transports/common"
+	"github.com/qp/go/transports"
 )
 
 // Log implements a transport that simply logs
@@ -13,7 +13,7 @@ type Log struct {
 }
 
 // MakeLog makes and initializes a new log transport
-func MakeLog(quiet bool) common.Transport {
+func MakeLog(quiet bool) transports.Transport {
 	return &Log{quiet: quiet}
 }
 
@@ -35,7 +35,7 @@ func (l *Log) ListenFor(channel string) {
 }
 
 // OnMessage logs activity
-func (l *Log) OnMessage(messageFunc common.MessageFunc) {
+func (l *Log) OnMessage(messageFunc transports.MessageFunc) {
 	l.shouldLog("OnMessage")
 }
 

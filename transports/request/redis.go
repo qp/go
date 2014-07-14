@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/qp/go/transports/common"
+	"github.com/qp/go/transports"
 )
 
 // Redis implements the Transport interface using
 // Redis as the underlying transport technology.
 type Redis struct {
 	pool      *redis.Pool
-	callback  common.MessageFunc
+	callback  transports.MessageFunc
 	listeners []string
 	lock      sync.Mutex
 	once      sync.Once
@@ -21,7 +21,7 @@ type Redis struct {
 }
 
 // MakeRedis initializes a new Redis transport instance
-func MakeRedis(url string) common.Transport {
+func MakeRedis(url string) transports.Transport {
 	var pool = &redis.Pool{
 		MaxIdle:     8,
 		IdleTimeout: 240 * time.Second,
@@ -59,7 +59,7 @@ func (r *Redis) ListenFor(channel string) {
 
 // OnMessage sets the callback function to be called whenever
 // a message is received.
-func (r *Redis) OnMessage(messageFunc common.MessageFunc) {
+func (r *Redis) OnMessage(messageFunc transports.MessageFunc) {
 	r.callback = messageFunc
 }
 
@@ -113,7 +113,7 @@ func (r *Redis) processMessages() {
 						conn.Close()
 						return
 					}
-					go r.callback(&common.BinaryMessage{Channel: channel, Data: data})
+					go r.callback(&transports.BinaryMessage{Channel: channel, Data: data})
 					conn.Close()
 				}
 			}

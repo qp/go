@@ -7,21 +7,21 @@ import (
 
 	"github.com/qp/go/codecs"
 	"github.com/qp/go/transports"
-	"github.com/qp/go/transports/common"
+	"github.com/qp/go/transports/request"
 	"github.com/stretchr/testify/assert"
 )
 
 var tests = []struct {
 	name      string
 	pre       func() bool
-	transport func() common.Transport
+	transport func() transports.Transport
 	post      func()
 }{
 	{
 		name: "InProc",
 		pre:  func() bool { return true },
-		transport: func() common.Transport {
-			return transports.MakeInProc(transports.KindRequest, nil)
+		transport: func() transports.Transport {
+			return request.MakeInProc(nil)
 		},
 		post: func() {},
 	},
@@ -43,8 +43,8 @@ var tests = []struct {
 			}
 			return true
 		},
-		transport: func() common.Transport {
-			return transports.MakeRedis(transports.KindRequest, "127.0.0.1:6379")
+		transport: func() transports.Transport {
+			return request.MakeRedis("127.0.0.1:6379")
 		},
 		post: func() { exec.Command("redis-cli", "shutdown").Run() },
 	},
