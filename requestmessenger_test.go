@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var tests = []struct {
+var requestTests = []struct {
 	name      string
 	pre       func() bool
 	transport func() transports.RequestTransport
@@ -53,7 +53,7 @@ var tests = []struct {
 
 func TestRequestMessenger(t *testing.T) {
 
-	for _, test := range tests {
+	for _, test := range requestTests {
 
 		if !test.pre() {
 			t.Skip("Skipping because prefunc failed")
@@ -86,7 +86,7 @@ func TestRequestMessenger(t *testing.T) {
 
 func TestRequestMessengerMultipleJumps(t *testing.T) {
 
-	for _, test := range tests {
+	for _, test := range requestTests {
 
 		if !test.pre() {
 			t.Skip("Skipping because prefunc failed")

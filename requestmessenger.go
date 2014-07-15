@@ -18,26 +18,27 @@ type RequestMessenger struct {
 	responseName string
 	codec        codecs.Codec
 	transport    transports.RequestTransport
-	resolver     *exchange.Resolver
-	mapper       *exchange.Mapper
+	resolver     *exchange.RequestResolver
+	mapper       *exchange.RequestMapper
 }
 
-// MakeRequestMessenger creates a new request messenger to be used for interacting with
-// the qp system.
-func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transport transports.RequestTransport) *RequestMessenger {
-	if responseName == "" {
-		responseName = uuid.New()
+// MakeRequestMessenger creates a new request messenger that allows direct communication between
+// two endpoints in the qp system. It also allows for pipelining through multiple specified
+// endpoints.
+func MakeRequestMessenger(name, instanceName string, codec codecs.Codec, transport transports.RequestTransport) *RequestMessenger {
+	if instanceName == "" {
+		instanceName = uuid.New()
 	}
 
 	r := &RequestMessenger{name: name,
-		responseName: name + "." + responseName,
+		responseName: name + "." + instanceName,
 		codec:        codec,
 		transport:    transport,
 		resolver:     exchange.MakeResolver(),
-		mapper:       exchange.MakeMapper(),
+		mapper:       exchange.MakeRequestMapper(),
 	}
 
-	// listen on the "responseName" responseName
+	// listen on the "responseName" channel
 	r.transport.ListenFor(r.responseName)
 
 	r.transport.OnMessage(func(bm *transports.BinaryMessage) {

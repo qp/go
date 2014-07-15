@@ -8,7 +8,7 @@ import (
 
 func TestMapper(t *testing.T) {
 
-	m := MakeMapper()
+	m := MakeRequestMapper()
 	if assert.NotNil(t, m) {
 
 		assert.NotNil(t, m.items)
@@ -30,7 +30,7 @@ func TestMapper(t *testing.T) {
 
 func TestMapperMultiple(t *testing.T) {
 
-	m := MakeMapper()
+	m := MakeRequestMapper()
 	if assert.NotNil(t, m) {
 
 		assert.NotNil(t, m.items)
