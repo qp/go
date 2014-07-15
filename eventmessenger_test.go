@@ -74,8 +74,8 @@ func TestEventMessenger(t *testing.T) {
 				hit <- struct{}{}
 			}
 
-			em.OnEvent(eh, "test.event")
-			em.OnEvent(ehw, "test.event.*")
+			em.Subscribe(eh, "test.event")
+			em.SubscribeChildren(ehw, "test.event.*")
 
 			em.Start()
 

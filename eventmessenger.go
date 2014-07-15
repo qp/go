@@ -79,7 +79,7 @@ func (e *EventMessenger) Stop() {
 	e.transport.Stop()
 }
 
-// OnEvent registers a handler for a list of event channels. When an event is
+// Subscribe registers a handler for a list of event channels. When an event is
 // received on any of the given channels, the provided handler is called.
 //
 // A channel can take the form of `prefix[.optional_prefix(es)][.*]`
@@ -88,7 +88,7 @@ func (e *EventMessenger) Stop() {
 // types of requests being handled by a router. `router.request.size` could be used
 // to publish events about the size of requests being handled by a router. At this point,
 // you could subscribe to `router.request.*` and receive both type and size messages.
-func (e *EventMessenger) OnEvent(handler exchange.EventHandler, channels ...string) {
+func (e *EventMessenger) Subscribe(handler exchange.EventHandler, channels ...string) {
 	// validate handler is not nil
 	if handler == nil {
 		panic("handler cannot be nil")
@@ -103,6 +103,34 @@ func (e *EventMessenger) OnEvent(handler exchange.EventHandler, channels ...stri
 		e.mapper.Track(channel, handler)
 		// instruct the transport to listen on the channel
 		e.transport.ListenFor(channel)
+	}
+}
+
+// SubscribeChildren registers a handler for a list of event channels and their children.
+// When an event is received on any of the given channels, the provided handler
+// is called.
+//
+// A channel can take the form of `prefix[.optional_prefix(es)][.*]`
+//
+// For example, `router.request.type` could be used to publish events about the
+// types of requests being handled by a router. `router.request.size` could be used
+// to publish events about the size of requests being handled by a router. At this point,
+// you could subscribe to `router.request.*` and receive both type and size messages.
+func (e *EventMessenger) SubscribeChildren(handler exchange.EventHandler, channels ...string) {
+	// validate handler is not nil
+	if handler == nil {
+		panic("handler cannot be nil")
+	}
+	// validate channels is not empty
+	if len(channels) == 0 {
+		panic("channels cannot be empty")
+	}
+
+	// associate each channel with the appropriate handler function
+	for _, channel := range channels {
+		e.mapper.Track(channel, handler)
+		// instruct the transport to listen on the channel
+		e.transport.ListenForChildren(channel)
 	}
 }
 

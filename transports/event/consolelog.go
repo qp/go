@@ -28,6 +28,11 @@ func (l *Log) ListenFor(channel string) {
 	log.Println("Listening on channel:", channel)
 }
 
+// ListenForChildren logs activity
+func (l *Log) ListenForChildren(channel string) {
+	log.Println("Listening on channel:", channel)
+}
+
 // OnMessage logs activity
 func (l *Log) OnMessage(messageFunc transports.MessageFunc) {
 	log.Println("OnMessage")

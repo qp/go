@@ -25,7 +25,6 @@ type MessageFunc func(bm *BinaryMessage)
 type Transport interface {
 	Start() error
 	Stop()
-	ListenFor(channel string)
 	OnMessage(messageFunc MessageFunc)
 	SetTimeout(timeout time.Duration)
 }
@@ -34,6 +33,7 @@ type Transport interface {
 // send messages to a given endpoint.
 type RequestTransport interface {
 	Transport
+	ListenFor(channel string)
 	Send(to string, data []byte) error
 }
 
@@ -41,5 +41,7 @@ type RequestTransport interface {
 // publish messages to subscribed listeners.
 type EventTransport interface {
 	Transport
+	ListenFor(channel string)
+	ListenForChildren(channel string)
 	Publish(to string, data []byte) error
 }

@@ -47,12 +47,12 @@ func TestInProcMultiple(t *testing.T) {
 	a := assert.New(t)
 
 	channel := "test.event"
-	channel2 := "test.event.*"
 	mc := make(chan *transports.BinaryMessage)
 
 	data, _ := json.Marshal(map[string]interface{}{"name": "Tyler"})
 
 	ip.ListenFor(channel)
+	ip.ListenForChildren(channel)
 	ip.OnMessage(func(bm *transports.BinaryMessage) {
 		mc <- bm
 	})
@@ -60,7 +60,7 @@ func TestInProcMultiple(t *testing.T) {
 	ip.Start()
 
 	ip2 := MakeInProc(nil)
-	ip2.ListenFor(channel2)
+	ip2.ListenForChildren(channel)
 	ip2.OnMessage(func(bm *transports.BinaryMessage) {
 		mc <- bm
 	})

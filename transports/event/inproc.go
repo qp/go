@@ -38,7 +38,9 @@ func processMessages() {
 			case bm := <-queue:
 				lock.RLock()
 				for channel, procs := range channels {
-					if strings.HasPrefix(channel, bm.Channel) {
+					if (strings.HasSuffix(channel, "*") &&
+						strings.HasPrefix(channel, bm.Channel)) ||
+						channel == bm.Channel {
 						for _, instance := range procs {
 							go instance.callback(bm)
 						}
@@ -59,11 +61,21 @@ func MakeInProc(wrapped transports.EventTransport) transports.EventTransport {
 	return &InProc{wrapped: wrapped}
 }
 
-// ListenFor instructs InProc to deliver a message for the given channel
-// The channel can be in the form of a wildcard, such as "system.event.*"
-// Any channel that begins with "system.event." will be matched and
-// the callback will be called.
+// ListenFor instructs InProc to listen for a message for the given channel
 func (i *InProc) ListenFor(channel string) {
+	// listen on a channel
+	lock.Lock()
+	channels[channel] = append(channels[channel], i)
+	lock.Unlock()
+	if i.wrapped != nil {
+		i.wrapped.ListenFor(channel)
+	}
+}
+
+// ListenForChildren instructs InProc to listen for a message for the given channel
+// and all its children
+func (i *InProc) ListenForChildren(channel string) {
+	channel += "*"
 	// listen on a channel
 	lock.Lock()
 	channels[channel] = append(channels[channel], i)
