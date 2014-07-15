@@ -1,5 +1,14 @@
 package transports
 
+import (
+	"errors"
+	"time"
+)
+
+// ErrTransportStopped is returned when an method is
+// called on a stopped transport
+var ErrTransportStopped = errors.New("transport is stopped")
+
 // BinaryMessage is used to communicate both the
 // channel of the message and the associated data.
 type BinaryMessage struct {
@@ -18,6 +27,7 @@ type Transport interface {
 	Stop()
 	ListenFor(channel string)
 	OnMessage(messageFunc MessageFunc)
+	SetTimeout(timeout time.Duration)
 }
 
 // RequestTransport extends Transport to provide a way to

@@ -2,6 +2,7 @@ package event
 
 import (
 	"log"
+	"time"
 
 	"github.com/qp/go/transports"
 )
@@ -41,4 +42,9 @@ func (l *Log) Start() error {
 // Stop logs activity
 func (l *Log) Stop() {
 	log.Println("Stop")
+}
+
+// SetTimeout logs the activity
+func (l *Log) SetTimeout(timeout time.Duration) {
+	log.Println("Setting timeout to:", timeout)
 }

@@ -1,8 +1,10 @@
 package request
 
 import (
-	"github.com/qp/go/transports"
 	"sync"
+	"time"
+
+	"github.com/qp/go/transports"
 )
 
 type instanceID uint64
@@ -86,6 +88,10 @@ func (i *InProc) Send(channel string, message []byte) error {
 		}
 	}
 	return nil
+}
+
+// SetTimeout is a no-op for the InProc transport
+func (i *InProc) SetTimeout(timeout time.Duration) {
 }
 
 // Start is a no-op for the InProc transport.

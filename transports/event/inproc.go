@@ -3,6 +3,7 @@ package event
 import (
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/qp/go/transports"
 )
@@ -104,4 +105,8 @@ func (i *InProc) Start() error {
 
 // Stop is a no-op for the InProc transport.
 func (i *InProc) Stop() {
+}
+
+// SetTimeout is a no-op for the InProc transport
+func (i *InProc) SetTimeout(timeout time.Duration) {
 }

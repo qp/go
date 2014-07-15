@@ -2,6 +2,7 @@ package qp
 
 import (
 	"log"
+	"time"
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/qp/go/codecs"
@@ -102,6 +103,15 @@ func MakeRequestMessenger(name, instanceName string, codec codecs.Codec, transpo
 	})
 
 	return r
+}
+
+// SetTimeout sets the timeout to the given value.
+// This timeout is used when gracefully shutting down the
+// transport. In-flight requests will have this much time
+// to complete before being abandoned.
+// The default timeout value is 5 seconds.
+func (r *RequestMessenger) SetTimeout(timeout time.Duration) {
+	r.transport.SetTimeout(timeout)
 }
 
 // Start spins up the Request Messenger to start processing
