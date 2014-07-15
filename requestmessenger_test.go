@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/qp/go/codecs"
+	"github.com/qp/go/exchange"
 	"github.com/qp/go/transports"
 	"github.com/qp/go/transports/request"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +62,7 @@ func TestRequestMessenger(t *testing.T) {
 		rm := MakeRequestMessenger("test", test.name, codecs.MakeJSON(), test.transport())
 		rm2 := MakeRequestMessenger("test2", test.name, codecs.MakeJSON(), test.transport())
 		if assert.NotNil(t, rm) && assert.NotNil(t, rm2) {
-			rm.OnRequest(func(channel string, request *Request) {
+			rm.OnRequest(func(channel string, request *exchange.Request) {
 				request.Data = "hello from handler"
 			}, "test")
 
@@ -100,13 +101,13 @@ func TestRequestMessengerMultipleJumps(t *testing.T) {
 			assert.NotNil(t, s1) &&
 			assert.NotNil(t, s2) &&
 			assert.NotNil(t, s3) {
-			s1.OnRequest(func(channel string, request *Request) {
+			s1.OnRequest(func(channel string, request *exchange.Request) {
 				request.Data = append(request.Data.([]interface{}), "one")
 			}, "one")
-			s2.OnRequest(func(channel string, request *Request) {
+			s2.OnRequest(func(channel string, request *exchange.Request) {
 				request.Data = append(request.Data.([]interface{}), "two")
 			}, "two")
-			s3.OnRequest(func(channel string, request *Request) {
+			s3.OnRequest(func(channel string, request *exchange.Request) {
 				request.Data = append(request.Data.([]interface{}), "three")
 			}, "three")
 

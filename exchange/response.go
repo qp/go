@@ -1,4 +1,4 @@
-package qp
+package exchange
 
 import "fmt"
 
@@ -10,9 +10,9 @@ type Response struct {
 	Data interface{} `json:"data"` // arbitrary data payload
 }
 
-// makeResponse makes a new response object and generates a unique ID in the
+// MakeResponse makes a new response object and generates a unique ID in the
 // from array.
-func makeResponse(endpoint string, object interface{}, id string) *Response {
+func MakeResponse(endpoint string, object interface{}, id string) *Response {
 	return &Response{From: []string{endpoint}, ID: id, Data: object}
 }
 

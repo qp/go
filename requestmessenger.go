@@ -5,12 +5,9 @@ import (
 
 	"code.google.com/p/go-uuid/uuid"
 	"github.com/qp/go/codecs"
+	"github.com/qp/go/exchange"
 	"github.com/qp/go/transports"
 )
-
-// RequestHandler defines the function signature for the callback
-// that will be called when a request is received.
-type RequestHandler func(channel string, request *Request)
 
 // RequestMessenger defines the interface through which
 // requests are introduced into the qp system, and responses
@@ -21,8 +18,8 @@ type RequestMessenger struct {
 	responseName string
 	codec        codecs.Codec
 	transport    transports.RequestTransport
-	resolver     *resolver
-	mapper       *mapper
+	resolver     *exchange.Resolver
+	mapper       *exchange.Mapper
 }
 
 // MakeRequestMessenger creates a new request messenger to be used for interacting with
@@ -36,8 +33,8 @@ func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transpo
 		responseName: name + "." + responseName,
 		codec:        codec,
 		transport:    transport,
-		resolver:     makeResolver(),
-		mapper:       makeMapper(),
+		resolver:     exchange.MakeResolver(),
+		mapper:       exchange.MakeMapper(),
 	}
 
 	// listen on the "responseName" responseName
@@ -47,7 +44,7 @@ func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transpo
 		// switch on the bm.channel to determine the type of message
 		if bm.Channel == r.responseName {
 			// decode to response object
-			var response Response
+			var response exchange.Response
 			err := r.codec.Unmarshal(bm.Data, &response)
 			if err != nil {
 				// dispatch a log entry and abort
@@ -56,10 +53,10 @@ func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transpo
 			}
 
 			// map the response to the appropriate ResponseFuture
-			go r.resolver.resolve(&response)
+			go r.resolver.Resolve(&response)
 		} else {
 			// decode to request object
-			var request Request
+			var request exchange.Request
 			err := r.codec.Unmarshal(bm.Data, &request)
 			if err != nil {
 				log.Println("Unable to unmarshal request: ", err)
@@ -67,7 +64,7 @@ func MakeRequestMessenger(name, responseName string, codec codecs.Codec, transpo
 			}
 
 			// map the request to the appropriate RequestHandler
-			handlers := r.mapper.find(bm.Channel)
+			handlers := r.mapper.Find(bm.Channel)
 			if handlers != nil {
 				go func() {
 					for _, handler := range handlers {
@@ -124,7 +121,7 @@ func (r *RequestMessenger) Stop() {
 
 // OnRequest assigns the given handler to the given channels, calling the handler
 // when a message is received on one of those channels.
-func (r *RequestMessenger) OnRequest(handler RequestHandler, channels ...string) {
+func (r *RequestMessenger) OnRequest(handler exchange.RequestHandler, channels ...string) {
 
 	// validate handler is not nil
 	if handler == nil {
@@ -137,7 +134,7 @@ func (r *RequestMessenger) OnRequest(handler RequestHandler, channels ...string)
 
 	// associate each channel with the appropriate handler function
 	for _, channel := range channels {
-		r.mapper.track(channel, handler)
+		r.mapper.Track(channel, handler)
 		// instruct the transport to listen on the channel
 		r.transport.ListenFor(channel)
 	}
@@ -148,7 +145,7 @@ func (r *RequestMessenger) OnRequest(handler RequestHandler, channels ...string)
 // be one or more endpoints. If it is more than one, each will receive the message, in order, and
 // have an opportunity to mutate it before it is dispatched to the next endpoint in the pipeline.
 // The provided object will be serialized and send as the "data" field in the message.
-func (r *RequestMessenger) Request(object interface{}, pipeline ...string) (*ResponseFuture, error) {
+func (r *RequestMessenger) Request(object interface{}, pipeline ...string) (*exchange.ResponseFuture, error) {
 
 	// validate that we have a pipeline
 	if len(pipeline) == 0 {
@@ -163,7 +160,7 @@ func (r *RequestMessenger) Request(object interface{}, pipeline ...string) (*Res
 	// assign the given "object" to the "data" field in the request object
 	// assign the "to" stack in the request object using the pipeline string, except the
 	// top that has been poppped off and is being used to make the transport call
-	request := MakeRequest(r.responseName, object, pipeline[1:]...)
+	request := exchange.MakeRequest(r.responseName, object, pipeline[1:]...)
 	to := pipeline[0]
 
 	// encode the request object to a byte slice
@@ -174,8 +171,8 @@ func (r *RequestMessenger) Request(object interface{}, pipeline ...string) (*Res
 
 	// use the unique ID in the request object to associate a request with a reply
 	// we have to map the request to the response future, then handle that response when it comes back
-	rf := makeResponseFuture(request.ID)
-	r.resolver.track(rf)
+	rf := exchange.MakeResponseFuture(request.ID)
+	r.resolver.Track(rf)
 
 	// call the transport and give it the popped "to" endpoint, as well as
 	// the request object to that endpoint and give it the encoded message

@@ -9,43 +9,36 @@ import (
 // Log implements a transport that simply logs
 // activity to console.
 type Log struct {
-	quiet bool
 }
 
 // MakeLog makes and initializes a new log transport
-func MakeLog(quiet bool) transports.RequestTransport {
-	return &Log{quiet: quiet}
-}
-
-func (l *Log) shouldLog(args ...interface{}) {
-	if !l.quiet {
-		log.Println(args...)
-	}
+func MakeLog() transports.RequestTransport {
+	return &Log{}
 }
 
 // Send logs activity
 func (l *Log) Send(to string, data []byte) error {
-	l.shouldLog("Sending", string(data), "to:", to)
+	log.Println("Sending", string(data), "to:", to)
 	return nil
 }
 
 // ListenFor logs activity
 func (l *Log) ListenFor(channel string) {
-	l.shouldLog("Listening on channel:", channel)
+	log.Println("Listening on channel:", channel)
 }
 
 // OnMessage logs activity
 func (l *Log) OnMessage(messageFunc transports.MessageFunc) {
-	l.shouldLog("OnMessage")
+	log.Println("OnMessage")
 }
 
 // Start logs activity
 func (l *Log) Start() error {
-	l.shouldLog("Start")
+	log.Println("Start")
 	return nil
 }
 
 // Stop logs activity
 func (l *Log) Stop() {
-	l.shouldLog("Stop")
+	log.Println("Stop")
 }

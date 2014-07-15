@@ -1,4 +1,4 @@
-package qp
+package exchange
 
 import (
 	"testing"
@@ -7,14 +7,14 @@ import (
 )
 
 func TestResolver(t *testing.T) {
-	c := makeResolver()
+	c := MakeResolver()
 
-	r := makeResponse("test", "object", "id")
-	rf := makeResponseFuture("id")
+	r := MakeResponse("test", "object", "id")
+	rf := MakeResponseFuture("id")
 
 	if assert.NotNil(t, c) {
-		c.track(rf)
-		go c.resolve(r)
+		c.Track(rf)
+		go c.Resolve(r)
 		r2 := rf.Response()
 		assert.Equal(t, r, r2)
 	}

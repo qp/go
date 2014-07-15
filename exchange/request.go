@@ -1,4 +1,4 @@
-package qp
+package exchange
 
 import "github.com/qp/go/utils"
 
@@ -12,5 +12,5 @@ type Request struct {
 
 // MakeRequest makes a new request object and generates a unique ID in the from array.
 func MakeRequest(endpoint string, object interface{}, pipeline ...string) *Request {
-	return &Request{To: pipeline, Response: makeResponse(endpoint, object, utils.UniqueStringID())}
+	return &Request{To: pipeline, Response: MakeResponse(endpoint, object, utils.UniqueStringID())}
 }

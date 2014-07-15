@@ -1,4 +1,4 @@
-package qp
+package exchange
 
 // ResponseFuture implements a future for a response object
 // It allows execution to continue until the response object
@@ -11,10 +11,10 @@ type ResponseFuture struct {
 	fetched  chan struct{}
 }
 
-// makeResponseFuture creates a new response future that
+// MakeResponseFuture creates a new response future that
 // is initialized appropriately for waiting on an incoming
 // response.
-func makeResponseFuture(id string) *ResponseFuture {
+func MakeResponseFuture(id string) *ResponseFuture {
 	return &ResponseFuture{id: id, response: make(chan *Response), fetched: make(chan struct{})}
 }
 

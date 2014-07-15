@@ -1,4 +1,4 @@
-package qp
+package exchange
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 func TestMapper(t *testing.T) {
 
-	m := makeMapper()
+	m := MakeMapper()
 	if assert.NotNil(t, m) {
 
 		assert.NotNil(t, m.items)
@@ -17,8 +17,8 @@ func TestMapper(t *testing.T) {
 		h := func(channel string, request *Request) {
 			run = true
 		}
-		m.track("test", h)
-		handlers := m.find("test")
+		m.Track("test", h)
+		handlers := m.Find("test")
 
 		if assert.NotNil(t, handlers) {
 			handlers[0]("test", nil)
@@ -30,7 +30,7 @@ func TestMapper(t *testing.T) {
 
 func TestMapperMultiple(t *testing.T) {
 
-	m := makeMapper()
+	m := MakeMapper()
 	if assert.NotNil(t, m) {
 
 		assert.NotNil(t, m.items)
@@ -44,9 +44,9 @@ func TestMapperMultiple(t *testing.T) {
 			run2 = true
 		}
 
-		m.track("test", h)
-		m.track("test", h2)
-		handlers := m.find("test")
+		m.Track("test", h)
+		m.Track("test", h2)
+		handlers := m.Find("test")
 
 		if assert.NotNil(t, handlers) {
 			handlers[0]("test", nil)

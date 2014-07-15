@@ -14,7 +14,7 @@ var _ transports.RequestTransport = (*InProc)(nil)
 
 func TestInProc(t *testing.T) {
 
-	ip := MakeInProc(MakeLog(true))
+	ip := MakeInProc(nil)
 	a := assert.New(t)
 	channel := "test"
 	mc := make(chan *transports.BinaryMessage)
@@ -61,7 +61,7 @@ func TestInProc(t *testing.T) {
 
 func TestInProcMultiple(t *testing.T) {
 
-	ip := MakeInProc(MakeLog(true))
+	ip := MakeInProc(nil)
 
 	a := assert.New(t)
 
@@ -86,7 +86,7 @@ func TestInProcMultiple(t *testing.T) {
 		a.Fail("No message received!")
 	}
 
-	ip2 := MakeInProc(MakeLog(true))
+	ip2 := MakeInProc(nil)
 	ip2.ListenFor(channel)
 	ip2.OnMessage(func(bm *transports.BinaryMessage) {
 		mc <- bm
