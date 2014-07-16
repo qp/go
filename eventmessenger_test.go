@@ -1,6 +1,8 @@
 package qp
 
 import (
+	"fmt"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -25,7 +27,7 @@ var eventTests = []struct {
 		},
 		post: func() {},
 	},
-	/*{
+	{
 		name: "Redis",
 		pre: func() bool {
 			err := exec.Command("which", "redis-cli").Run()
@@ -47,7 +49,7 @@ var eventTests = []struct {
 			return event.MakeRedis("127.0.0.1:6379")
 		},
 		post: func() { exec.Command("redis-cli", "shutdown").Run() },
-	},*/
+	},
 }
 
 func TestEventMessenger(t *testing.T) {
@@ -55,7 +57,8 @@ func TestEventMessenger(t *testing.T) {
 	for _, test := range eventTests {
 
 		if !test.pre() {
-			t.Skip("Skipping because prefunc failed")
+			fmt.Println("Skipping", test.name, "due to pre-func fail.")
+			continue
 		}
 
 		em := MakeEventMessenger("test", "one", codecs.MakeJSON(), test.transport())
@@ -75,7 +78,7 @@ func TestEventMessenger(t *testing.T) {
 			}
 
 			em.Subscribe(eh, "test.event")
-			em.SubscribeChildren(ehw, "test.event.*")
+			em.SubscribeChildren(ehw, "test.event")
 
 			em.Start()
 
@@ -93,7 +96,7 @@ func TestEventMessenger(t *testing.T) {
 					if count == 2 {
 						break loop
 					}
-				case <-time.After(100 * time.Millisecond):
+				case <-time.After(200 * time.Millisecond):
 					assert.Fail(t, "Timed out while waiting for events")
 					break loop
 				}

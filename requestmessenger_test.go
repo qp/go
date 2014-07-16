@@ -1,6 +1,7 @@
 package qp
 
 import (
+	"fmt"
 	"os/exec"
 	"testing"
 	"time"
@@ -56,7 +57,7 @@ func TestRequestMessenger(t *testing.T) {
 	for _, test := range requestTests {
 
 		if !test.pre() {
-			t.Skip("Skipping because prefunc failed")
+			continue
 		}
 
 		rm := MakeRequestMessenger("test", test.name, codecs.MakeJSON(), test.transport())
@@ -89,7 +90,8 @@ func TestRequestMessengerMultipleJumps(t *testing.T) {
 	for _, test := range requestTests {
 
 		if !test.pre() {
-			t.Skip("Skipping because prefunc failed")
+			fmt.Println("Skipping", test.name, "due to pre-func fail.")
+			continue
 		}
 
 		rm := MakeRequestMessenger("multitest", test.name, codecs.MakeJSON(), test.transport())
