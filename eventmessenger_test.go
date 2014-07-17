@@ -96,7 +96,7 @@ func TestEventMessenger(t *testing.T) {
 					if count == 2 {
 						break loop
 					}
-				case <-time.After(200 * time.Millisecond):
+				case <-time.After(500 * time.Millisecond):
 					assert.Fail(t, "Timed out while waiting for events")
 					break loop
 				}
