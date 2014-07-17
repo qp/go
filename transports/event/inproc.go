@@ -95,8 +95,8 @@ func (i *InProc) OnMessage(messageFunc transports.MessageFunc) {
 	}
 }
 
-// Publish sends a message into the transport
-func (i *InProc) Publish(channel string, message []byte) error {
+// Send sends a message into the transport
+func (i *InProc) Send(channel string, message []byte) error {
 	lock.RLock()
 	_, ok := channels[channel]
 	lock.RUnlock()
@@ -104,7 +104,7 @@ func (i *InProc) Publish(channel string, message []byte) error {
 		queue <- &transports.BinaryMessage{Channel: channel, Data: message}
 	} else {
 		if i.wrapped != nil {
-			return i.wrapped.Publish(channel, message)
+			return i.wrapped.Send(channel, message)
 		}
 	}
 	return nil

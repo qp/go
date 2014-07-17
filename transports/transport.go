@@ -27,21 +27,19 @@ type Transport interface {
 	Stop()
 	OnMessage(messageFunc MessageFunc)
 	SetTimeout(timeout time.Duration)
+	ListenFor(channel string)
+	Send(to string, data []byte) error
 }
 
 // RequestTransport extends Transport to provide a way to
 // send messages to a given endpoint.
 type RequestTransport interface {
 	Transport
-	ListenFor(channel string)
-	Send(to string, data []byte) error
 }
 
 // EventTransport extends Transport to provide a way to
 // publish messages to subscribed listeners.
 type EventTransport interface {
 	Transport
-	ListenFor(channel string)
 	ListenForChildren(channel string)
-	Publish(to string, data []byte) error
 }

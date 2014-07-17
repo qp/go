@@ -41,9 +41,9 @@ func MakeRedis(url string) transports.EventTransport {
 	}
 }
 
-// Publish publishes a message to Redis and returns an error
+// Send publishes a message to Redis and returns an error
 // if there was a problem sending.
-func (r *Redis) Publish(to string, data []byte) error {
+func (r *Redis) Send(to string, data []byte) error {
 	if atomic.LoadUint32(&r.running) == 0 {
 		return transports.ErrTransportStopped
 	}

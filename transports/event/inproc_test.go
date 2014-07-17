@@ -26,7 +26,7 @@ func TestInProc(t *testing.T) {
 		mc <- bm
 	})
 	ip.Start()
-	ip.Publish(channel, data)
+	ip.Send(channel, data)
 
 	select {
 	case bm := <-mc:
@@ -67,7 +67,7 @@ func TestInProcMultiple(t *testing.T) {
 
 	ip2.Start()
 
-	ip.Publish(channel, data)
+	ip.Send(channel, data)
 
 	select {
 	case bm := <-mc:

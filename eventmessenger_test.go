@@ -84,7 +84,7 @@ func TestEventMessenger(t *testing.T) {
 
 			pub := MakeEventMessenger("publisher", "one", codecs.MakeJSON(), test.transport())
 			pub.Start()
-			pub.Publish(data, "test.event")
+			pub.Send(data, "test.event")
 			pub.Stop()
 
 			count := 0

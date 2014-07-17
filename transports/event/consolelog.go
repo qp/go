@@ -17,8 +17,8 @@ func MakeLog() transports.EventTransport {
 	return &Log{}
 }
 
-// Publish logs activity
-func (l *Log) Publish(to string, data []byte) error {
+// Send logs activity
+func (l *Log) Send(to string, data []byte) error {
 	log.Println("Publishing", string(data), "to:", to)
 	return nil
 }

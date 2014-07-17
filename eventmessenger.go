@@ -134,9 +134,9 @@ func (e *EventMessenger) SubscribeChildren(handler exchange.EventHandler, channe
 	}
 }
 
-// Publish publishes an event, encapsulating the given object so user data
+// Send publishes an event, encapsulating the given object so user data
 // can be sent along with it.
-func (e *EventMessenger) Publish(object interface{}, channel string) error {
+func (e *EventMessenger) Send(object interface{}, channel string) error {
 	// validate that we have a channels
 	if len(channel) == 0 {
 		panic("channel cannot be empty")
@@ -154,5 +154,5 @@ func (e *EventMessenger) Publish(object interface{}, channel string) error {
 	if err != nil {
 		return err
 	}
-	return e.transport.Publish(channel, data)
+	return e.transport.Send(channel, data)
 }

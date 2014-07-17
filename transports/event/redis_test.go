@@ -61,7 +61,7 @@ func TestRedis(t *testing.T) {
 
 	publisher := MakeRedis("127.0.0.1:6379")
 	publisher.Start()
-	publisher.Publish("test.event", data)
+	publisher.Send("test.event", data)
 	publisher.Stop()
 
 	count := 0
