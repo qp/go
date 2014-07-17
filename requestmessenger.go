@@ -116,9 +116,9 @@ func (r *RequestMessenger) SetTimeout(timeout time.Duration) {
 
 // Start spins up the Request Messenger to start processing
 // incoming and outgoing messages.
-func (r *RequestMessenger) Start() {
+func (r *RequestMessenger) Start() error {
 	// spin up the underlying transport
-	r.transport.Start()
+	return r.transport.Start()
 }
 
 // Stop tears down the Request Messenger in a graceful manner, allowing
