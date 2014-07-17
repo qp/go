@@ -57,6 +57,7 @@ func TestRequestMessenger(t *testing.T) {
 	for _, test := range requestTests {
 
 		if !test.pre() {
+			fmt.Println("Skipping", test.name, "due to pre-func fail.")
 			continue
 		}
 
