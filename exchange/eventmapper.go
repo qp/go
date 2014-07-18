@@ -1,6 +1,9 @@
 package exchange
 
-import "sync"
+import (
+	"strings"
+	"sync"
+)
 
 // EventHandler defines the function signature for the callback
 // that will be called when a event is received.
@@ -32,7 +35,15 @@ func (m *EventMapper) Track(id string, handler EventHandler) {
 func (m *EventMapper) Find(id string) []EventHandler {
 	var handlers []EventHandler
 	m.lock.RLock()
-	handlers = m.items[id]
+	for itemID, item := range m.items {
+		if strings.HasSuffix(itemID, "*") {
+			if strings.HasPrefix(id, itemID[:len(itemID)-1]) {
+				handlers = append(handlers, item...)
+			}
+		} else if id == itemID {
+			handlers = append(handlers, item...)
+		}
+	}
 	m.lock.RUnlock()
 	return handlers
 }

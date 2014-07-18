@@ -77,14 +77,14 @@ func TestEventMessenger(t *testing.T) {
 				hit <- struct{}{}
 			}
 
-			em.Subscribe(eh, "test.event")
+			em.Subscribe(eh, "test.event.one")
 			em.SubscribeChildren(ehw, "test.event")
 
 			em.Start()
 
 			pub := MakeEventMessenger("publisher", "one", codecs.MakeJSON(), test.transport())
 			pub.Start()
-			pub.Send(data, "test.event")
+			pub.Send(data, "test.event.one")
 			pub.Stop()
 
 			count := 0

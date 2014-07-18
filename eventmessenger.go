@@ -40,7 +40,6 @@ func MakeEventMessenger(name, instanceName string, codec codecs.Codec, transport
 
 	e.transport.OnMessage(func(bm *transports.BinaryMessage) {
 		if cbs := e.mapper.Find(bm.Channel); cbs != nil {
-
 			// decode to event object
 			var event exchange.Event
 			err := e.codec.Unmarshal(bm.Data, &event)
@@ -69,8 +68,8 @@ func (e *EventMessenger) SetTimeout(timeout time.Duration) {
 }
 
 // Start spins up the messenger to begin processing messages
-func (e *EventMessenger) Start() {
-	e.transport.Start()
+func (e *EventMessenger) Start() error {
+	return e.transport.Start()
 }
 
 // Stop spinds down the messenger gracefully, allowing in-flight
@@ -128,7 +127,7 @@ func (e *EventMessenger) SubscribeChildren(handler exchange.EventHandler, channe
 
 	// associate each channel with the appropriate handler function
 	for _, channel := range channels {
-		e.mapper.Track(channel, handler)
+		e.mapper.Track(channel+"*", handler)
 		// instruct the transport to listen on the channel
 		e.transport.ListenForChildren(channel)
 	}

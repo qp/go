@@ -38,9 +38,13 @@ func processMessages() {
 			case bm := <-queue:
 				lock.RLock()
 				for channel, procs := range channels {
-					if (strings.HasSuffix(channel, "*") &&
-						strings.HasPrefix(channel, bm.Channel)) ||
-						channel == bm.Channel {
+					if strings.HasSuffix(channel, "*") {
+						if strings.HasPrefix(bm.Channel, channel[:len(channel)-1]) {
+							for _, instance := range procs {
+								go instance.callback(bm)
+							}
+						}
+					} else if channel == bm.Channel {
 						for _, instance := range procs {
 							go instance.callback(bm)
 						}
