@@ -1,6 +1,7 @@
 package request
 
 import (
+	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -120,7 +121,7 @@ func (r *Redis) processMessages() {
 					return
 				default:
 					// BRPOP on the channel to wait for a new message
-					message, err := redis.Values(conn.Do("BRPOP", channel, "1"))
+					message, err := redis.Values(conn.Do("BRPOP", channel, "0"))
 					if err != nil {
 						// Did we get a timeout? That's fine. Continue.
 						if netErr, ok := err.(net.Error); ok {
@@ -130,6 +131,7 @@ func (r *Redis) processMessages() {
 						}
 						// Not a timeout? Something went wrong.
 						// TODO: Log this out.. maybe fire a metric to the logging endpoint
+						fmt.Println("Error trying to BRPOP", err)
 						conn.Close()
 						return
 					}
