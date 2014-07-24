@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"github.com/qp/go"
-	"github.com/qp/go/codecs"
-	"github.com/qp/go/exchange"
-	"github.com/qp/go/transports/request"
+	"github.com/qp/go/redis"
 )
 
 func main() {
@@ -18,8 +16,8 @@ func main() {
 	wg.Add(1)
 
 	// create our messenger
-	m := qp.MakeRequestMessenger("second", "one", codecs.MakeJSON(), request.MakeRedis("127.0.0.1:6379"))
-	m.OnRequest(func(channel string, request *exchange.Request) {
+	m := qp.NewRequester("second", "one", qp.JSON, redis.NewReqTransport("127.0.0.1:6379"))
+	m.OnRequest(func(channel string, request *qp.Request) {
 		d, _ := json.Marshal(request)
 		fmt.Println("Hello from second!", string(d))
 		request.Data.(map[string]interface{})["messages"] = append(request.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the second service at "+time.Now().String())

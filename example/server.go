@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/qp/go/codecs"
-	"github.com/qp/go/transports/request"
+	"github.com/qp/go/redis"
 
 	"github.com/qp/go"
 
@@ -17,7 +16,7 @@ import (
 func main() {
 
 	// create our messenger
-	m := qp.MakeRequestMessenger("webserver", "one", codecs.MakeJSON(), request.MakeRedis("127.0.0.1:6379"))
+	m := qp.NewRequester("webserver", "one", qp.JSON, redis.NewReqTransport("127.0.0.1:6379"))
 	err := m.Start()
 	if err != nil {
 		fmt.Println("error!", err)
