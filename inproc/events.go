@@ -22,7 +22,7 @@ import (
 // events.
 type events struct {
 	callback qp.MessageFunc
-	wrapped  qp.EventTransport
+	wrapped  qp.PubSubTransport
 }
 
 var evtQueue = make(chan *qp.Message)
@@ -59,7 +59,7 @@ func init() {
 }
 
 // NewPubSubTransport creates a new in-process qp.EventTransport.
-func NewPubSubTransport(wrapped qp.EventTransport) qp.EventTransport {
+func NewPubSubTransport(wrapped qp.PubSubTransport) qp.PubSubTransport {
 	return &events{wrapped: wrapped}
 }
 

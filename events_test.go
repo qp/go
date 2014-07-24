@@ -15,13 +15,13 @@ import (
 var eventTests = []struct {
 	name      string
 	pre       func() bool
-	transport func() qp.EventTransport
+	transport func() qp.PubSubTransport
 	post      func()
 }{
 	{
 		name: "InProc",
 		pre:  func() bool { return true },
-		transport: func() qp.EventTransport {
+		transport: func() qp.PubSubTransport {
 			return inproc.NewPubSubTransport(nil)
 		},
 		post: func() {},
@@ -44,7 +44,7 @@ var eventTests = []struct {
 			}
 			return true
 		},
-		transport: func() qp.EventTransport {
+		transport: func() qp.PubSubTransport {
 			return redis.NewPubSubTransport("127.0.0.1:6379")
 		},
 		post: func() { exec.Command("redis-cli", "shutdown").Run() },

@@ -41,7 +41,7 @@ type RequestTransport interface {
 
 // EventTransport describes types capable of firing and listening
 // for events.
-type EventTransport interface {
+type PubSubTransport interface {
 	// Starts the transport.
 	Start() error
 	// Stops the transport.

@@ -81,14 +81,14 @@ type PubSub struct {
 	name      string
 	id        string
 	codec     Codec
-	transport EventTransport
+	transport PubSubTransport
 	mapper    *eventMapper
 }
 
 // NewPubSub creates a new PubSub for publishing and subscribing to events.
 // instanceName is a unique identifier for this particular instance of
 // an endpoint. If it is empty, a unique ID will be generated for you.
-func NewPubSub(name, instanceName string, codec Codec, transport EventTransport) *PubSub {
+func NewPubSub(name, instanceName string, codec Codec, transport PubSubTransport) *PubSub {
 	if instanceName == "" {
 		instanceName = uuid.New()
 	}

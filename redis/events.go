@@ -22,10 +22,10 @@ type events struct {
 }
 
 // ensure events is a valid qp.EventTransport
-var _ qp.EventTransport = (*events)(nil)
+var _ qp.PubSubTransport = (*events)(nil)
 
 // NewPubSubTransport initializes a Redis qp.EventTransport.
-func NewPubSubTransport(url string) qp.EventTransport {
+func NewPubSubTransport(url string) qp.PubSubTransport {
 	var pool = &redis.Pool{
 		MaxIdle:     8,
 		IdleTimeout: 240 * time.Second,
