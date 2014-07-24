@@ -18,6 +18,7 @@ func newResponse(endpoint string, object interface{}, id RequestID) *Response {
 	return &Response{From: []string{endpoint}, ID: id, Data: object}
 }
 
+// String gets a readable string representing this Response.
 func (r Response) String() string {
 	return fmt.Sprintf("From: %v\nID: %v\nData: %v", r.From, r.ID, r.Data)
 }
