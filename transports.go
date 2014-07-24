@@ -39,7 +39,7 @@ type RequestTransport interface {
 	Send(to string, data []byte) error
 }
 
-// EventTransport describes types capable of firing and listening
+// PubSubTransport describes types capable of firing and listening
 // for events.
 type PubSubTransport interface {
 	// Starts the transport.
