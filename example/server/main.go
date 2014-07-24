@@ -1,13 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/qp/go/transports"
-
-	"github.com/qp/go/codecs"
+	"github.com/qp/go/redis"
 
 	"github.com/qp/go"
 
@@ -17,8 +16,11 @@ import (
 func main() {
 
 	// create our messenger
-	m := qp.NewMessenger("webserver", &codecs.JSON{}, transports.NewRedis("127.0.0.1:6379"))
-	m.Start()
+	m := qp.NewRequester("webserver", "one", qp.JSON, redis.NewReqTransport("127.0.0.1:6379"))
+	err := m.Start()
+	if err != nil {
+		fmt.Println("error!", err)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
@@ -33,12 +35,8 @@ func main() {
 			fmt.Fprintf(w, "Unable to make request: %v\n", err)
 			return
 		}
-		msg := r.Message()
-		if msg.HasError() {
-			fmt.Fprintf(w, "An error was encountered while processing the request:\n%v\n", msg)
-			return
-		}
-		fmt.Fprintf(w, "Request processed sucessfully:\n%v\n", msg)
+		msg := r.Response()
+		json.NewEncoder(w).Encode(msg)
 	})
 
 	fmt.Println("Server started. Visit localhost:3001")

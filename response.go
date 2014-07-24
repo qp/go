@@ -1,34 +1,58 @@
 package qp
 
-import (
-	"time"
+import "fmt"
 
-	"github.com/qp/go/messages"
-)
-
-// Response implements a simple future with a timeout.
-// It is used to fetch the response from a pipeline request.
+// Response defines all the fields and information
+// included as part of a response to a request.
 type Response struct {
-	response chan *messages.Message
-	timeout  time.Duration
+	// From is an array of addresses encountered thus far
+	From []string `json:"from"`
+	// ID is the ID of the request to which this response relates
+	ID RequestID `json:"id"`
+	// Data is the repsonse data payload
+	Data interface{} `json:"data"`
 }
 
-//newResponse makes a new response object, creating
-// the channel through which the response will be sent.
-func newResponse(timeout time.Duration) *Response {
-	return &Response{response: make(chan *messages.Message), timeout: timeout}
+// newResponse makes a new response object
+func newResponse(endpoint string, object interface{}, id RequestID) *Response {
+	return &Response{From: []string{endpoint}, ID: id, Data: object}
 }
 
-// Message blocks until a response is received or the timeout
-// expires. If the timeout expires, the returned Message object
-// will be empty except for the Err field being set to an error
-// object.
-func (r *Response) Message() *messages.Message {
+func (r Response) String() string {
+	return fmt.Sprintf("From: %v\nID: %v\nData: %v", r.From, r.ID, r.Data)
+}
+
+// ResponseFuture implements a future for a response object
+// It allows execution to continue until the response object
+// is requested from this object, at which point it blocks and
+// waits for the response to come back.
+type ResponseFuture struct {
+	id       RequestID
+	response chan *Response
+	cached   *Response
+	fetched  chan struct{}
+}
+
+// newResponseFuture creates a new response future that
+// is initialized appropriately for waiting on an incoming
+// response.
+func newResponseFuture(id RequestID) *ResponseFuture {
+	return &ResponseFuture{id: id, response: make(chan *Response), fetched: make(chan struct{})}
+}
+
+// Response uses a future mechanism to retrieve the response.
+// Execution continues asynchronously until this method is called,
+// at which point execution blocks until the Response object is
+// available.
+//
+// There is no timeout. It will block indefinitely. This may
+// change in the future.
+func (r *ResponseFuture) Response() *Response {
 	select {
-	case m := <-r.response:
-		return m
-	case <-time.After(r.timeout):
-		// TODO: fire a message to the messenger telling it to delete this from the map
-		return &messages.Message{Err: map[string]interface{}{"message": "timeout expired while waiting for response"}}
+	case <-r.fetched:
+		return r.cached
+	case r.cached = <-r.response:
+		close(r.fetched)
+		return r.cached
 	}
 }
