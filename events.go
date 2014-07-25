@@ -149,7 +149,7 @@ func (e *PubSub) Stop() {
 // types of requests being handled by a router. `router.request.size` could be used
 // to publish events about the size of requests being handled by a router. At this point,
 // you could subscribe to `router.request.*` and receive both type and size messages.
-func (e *PubSub) Subscribe(handler EventHandler, channels ...string) {
+func (e *PubSub) Subscribe(handler EventHandler, channels []string) {
 	// validate handler is not nil
 	if handler == nil {
 		panic("handler cannot be nil")
@@ -177,7 +177,7 @@ func (e *PubSub) Subscribe(handler EventHandler, channels ...string) {
 // types of requests being handled by a router. `router.request.size` could be used
 // to publish events about the size of requests being handled by a router. At this point,
 // you could subscribe to `router.request.*` and receive both type and size messages.
-func (e *PubSub) SubscribeChildren(handler EventHandler, channels ...string) {
+func (e *PubSub) SubscribeChildren(handler EventHandler, channels []string) {
 	// validate handler is not nil
 	if handler == nil {
 		panic("handler cannot be nil")
