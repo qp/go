@@ -30,7 +30,7 @@ func main() {
 		data := map[string]interface{}{
 			"messages": []string{"Hello from the webserver at " + time.Now().String()},
 		}
-		r, err := m.Request(data, "first", "second", "third")
+		r, err := m.Request(data, []string{"first", "second", "third"})
 		if err != nil {
 			fmt.Fprintf(w, "Unable to make request: %v\n", err)
 			return

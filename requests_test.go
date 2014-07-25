@@ -65,12 +65,12 @@ func TestRequestMessenger(t *testing.T) {
 		if assert.NotNil(t, rm) && assert.NotNil(t, rm2) {
 			rm.OnRequest(func(channel string, Request *qp.Request) {
 				Request.Data = "hello from handler"
-			}, "test")
+			}, []string{"test"})
 
 			rm.Start()
 			rm2.Start()
 
-			rf, err := rm2.Request("data", "test")
+			rf, err := rm2.Request("data", []string{"test"})
 			if assert.NoError(t, err) {
 				assert.Equal(t, rf.Response().Data.(string), "hello from handler")
 				assert.Equal(t, rf.Response().From[0], "test2."+test.name)
@@ -105,20 +105,20 @@ func TestRequestMessengerMultipleJumps(t *testing.T) {
 			assert.NotNil(t, s3) {
 			s1.OnRequest(func(channel string, Request *qp.Request) {
 				Request.Data = append(Request.Data.([]interface{}), "one")
-			}, "one")
+			}, []string{"one"})
 			s2.OnRequest(func(channel string, Request *qp.Request) {
 				Request.Data = append(Request.Data.([]interface{}), "two")
-			}, "two")
+			}, []string{"two"})
 			s3.OnRequest(func(channel string, Request *qp.Request) {
 				Request.Data = append(Request.Data.([]interface{}), "three")
-			}, "three")
+			}, []string{"three"})
 
 			rm.Start()
 			s1.Start()
 			s2.Start()
 			s3.Start()
 
-			rf, err := rm.Request([]string{"origin"}, "one", "two", "three")
+			rf, err := rm.Request([]string{"origin"}, []string{"one", "two", "three"})
 			if assert.NoError(t, err) {
 				assert.Equal(t, rf.Response().Data.([]interface{})[0].(string), "origin")
 				assert.Equal(t, rf.Response().Data.([]interface{})[1].(string), "one")

@@ -76,8 +76,8 @@ func TestEventMessenger(t *testing.T) {
 				hit <- struct{}{}
 			}
 
-			em.Subscribe(eh, "test.event.one")
-			em.SubscribeChildren(ehw, "test.event")
+			em.Subscribe(eh, []string{"test.event.one"})
+			em.SubscribeChildren(ehw, []string{"test.event"})
 
 			em.Start()
 
@@ -95,7 +95,7 @@ func TestEventMessenger(t *testing.T) {
 					if count == 2 {
 						break loop
 					}
-				case <-time.After(500 * time.Millisecond):
+				case <-time.After(1 * time.Second):
 					assert.Fail(t, "Timed out while waiting for events")
 					break loop
 				}

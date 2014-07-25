@@ -26,7 +26,7 @@ type Request struct {
 }
 
 // newRequest makes a new request object and generates a unique ID in the from array.
-func newRequest(endpoint string, object interface{}, pipeline ...string) *Request {
+func newRequest(endpoint string, object interface{}, pipeline []string) *Request {
 	return &Request{To: pipeline, From: []string{endpoint}, ID: unique(), Data: object}
 }
 
@@ -151,7 +151,7 @@ func (r *Requester) Stop() {
 
 // OnRequest assigns the given handler to the given channels, calling the handler
 // when a message is received on one of those channels.
-func (r *Requester) OnRequest(handler RequestHandler, channels ...string) {
+func (r *Requester) OnRequest(handler RequestHandler, channels []string) {
 
 	// validate handler is not nil
 	if handler == nil {
@@ -175,7 +175,7 @@ func (r *Requester) OnRequest(handler RequestHandler, channels ...string) {
 // be one or more endpoints. If it is more than one, each will receive the message, in order, and
 // have an opportunity to mutate it before it is dispatched to the next endpoint in the pipeline.
 // The provided object will be serialized and send as the "data" field in the message.
-func (r *Requester) Request(object interface{}, pipeline ...string) (*ResponseFuture, error) {
+func (r *Requester) Request(object interface{}, pipeline []string) (*ResponseFuture, error) {
 
 	// validate that we have a pipeline
 	if len(pipeline) == 0 {
@@ -190,7 +190,7 @@ func (r *Requester) Request(object interface{}, pipeline ...string) (*ResponseFu
 	// assign the given "object" to the "data" field in the request object
 	// assign the "to" stack in the request object using the pipeline string, except the
 	// top that has been poppped off and is being used to make the transport call
-	Request := newRequest(r.responseName, object, pipeline[1:]...)
+	Request := newRequest(r.responseName, object, pipeline[1:])
 	to := pipeline[0]
 
 	// encode the request object to a byte slice
