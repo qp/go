@@ -22,7 +22,7 @@ func main() {
 		fmt.Println("Hello from second!", string(d))
 		request.Data.(map[string]interface{})["messages"] = append(request.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the second service at "+time.Now().String())
 		wg.Done()
-	}, "second")
+	}, []string{"second"})
 
 	err := m.Start()
 	if err != nil {
