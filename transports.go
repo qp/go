@@ -1,11 +1,6 @@
 package qp
 
-import (
-	"errors"
-	"time"
-)
-
-type Signal struct{}
+import "errors"
 
 // ErrTransportStopped is returned when an method is
 // called on a stopped transport.
@@ -19,29 +14,33 @@ type Message struct {
 	Data []byte
 }
 
+// Handler represents types capable of handling messages
+// from the transports.
 type Handler interface {
 	Handle(msg *Message)
 }
 
-// HandlerFunc is the signature for a Message Received Callback.
+// HandlerFunc represents functions capable of handling
+// messages.
 type HandlerFunc func(msg *Message)
 
+// Handle calls the HandlerFunc.
 func (f HandlerFunc) Handle(msg *Message) {
 	f(msg)
 }
 
+// PubSubTransport represents a transport capable of
+// providing publish/subscribe capabilities.
 type PubSubTransport interface {
-	Start() error
-	Stop()
-	StopChan() <-chan Signal
-	Publish(channel string, data interface{})
-	Subscribe(channel string, handler Handler)
+	StartStopper
+	Publish(channel string, data []byte) error
+	Subscribe(channel string, handler Handler) error
 }
 
-type SenderTransport interface {
-	Start() error
-	Stop(wait time.Duration)
-	StopChan() <-chan Signal
-	Send(channel string, data interface{})
-	OnMessage(channel string, handler Handler)
+// DirectTransport represents a transport capable of
+// providing request/response capabilities.
+type DirectTransport interface {
+	StartStopper
+	Send(channel string, data []byte) error
+	OnMessage(channel string, handler Handler) error
 }
