@@ -20,9 +20,9 @@ type PubSub struct {
 // ensure the interface is satisfied
 var _ qp.PubSubTransport = (*PubSub)(nil)
 
-var queue = make(chan *qp.Message)
-var instances = make(map[*PubSub]struct{})
-var lock sync.RWMutex
+var pubSubQueue = make(chan *qp.Message)
+var pubSubInstances = make(map[*PubSub]struct{})
+var pubSubLock sync.RWMutex
 
 // NewPubSub makes a new PubSub.
 func NewPubSub() *PubSub {
@@ -30,42 +30,42 @@ func NewPubSub() *PubSub {
 		handlers: make(map[string]qp.Handler),
 		stopChan: stop.Make(),
 	}
-	lock.Lock()
-	instances[p] = nothing
-	lock.Unlock()
+	pubSubLock.Lock()
+	pubSubInstances[p] = nothing
+	pubSubLock.Unlock()
 	return p
 }
 
-func processMessages() {
+func processPubSub() {
 	go func() {
 		for {
 			select {
-			case m, ok := <-queue:
+			case m, ok := <-pubSubQueue:
 				if !ok {
 					return
 				}
-				lock.Lock()
-				for instance := range instances {
+				pubSubLock.Lock()
+				for instance := range pubSubInstances {
 					instance.lock.RLock()
 					if h, ok := instance.handlers[m.Source]; ok {
 						go h.Handle(m)
 					}
 					instance.lock.RUnlock()
 				}
-				lock.Unlock()
+				pubSubLock.Unlock()
 			}
 		}
 	}()
 }
 
 func init() {
-	processMessages()
+	processPubSub()
 }
 
 // Publish publishes data on the specified channel.
 func (p *PubSub) Publish(channel string, data []byte) error {
 	m := &qp.Message{Source: channel, Data: data}
-	queue <- m
+	pubSubQueue <- m
 	return nil
 }
 
@@ -84,9 +84,9 @@ func (p *PubSub) Start() error {
 
 // Stop stops the transport and closes StopChan() when finished.
 func (p *PubSub) Stop(time.Duration) {
-	lock.Lock()
-	delete(instances, p)
-	lock.Unlock()
+	pubSubLock.Lock()
+	delete(pubSubInstances, p)
+	pubSubLock.Unlock()
 	close(p.stopChan)
 }
 
