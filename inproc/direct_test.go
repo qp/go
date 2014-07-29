@@ -6,12 +6,17 @@ import (
 
 	"github.com/qp/go"
 	"github.com/qp/go/inproc"
+	"github.com/stretchr/pat/stop"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDirect(t *testing.T) {
 
 	d := inproc.NewDirect()
+	defer func() {
+		d.Stop(stop.NoWait)
+		<-d.StopChan()
+	}()
 	require.NotNil(t, d)
 
 	msgs := make(chan *qp.Message)

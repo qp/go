@@ -2,9 +2,9 @@ package qp
 
 import "errors"
 
-// ErrTransportStopped is returned when an method is
-// called on a stopped transport.
-var ErrTransportStopped = errors.New("transport is stopped")
+// ErrNotRunning is returned when an method is
+// called on a transport at is not running.
+var ErrNotRunning = errors.New("transport is not running")
 
 // Message represents a single message of data and its source.
 type Message struct {

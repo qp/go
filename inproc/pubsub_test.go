@@ -7,6 +7,7 @@ import (
 	"github.com/qp/go"
 
 	"github.com/qp/go/inproc"
+	"github.com/stretchr/pat/stop"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,5 +50,10 @@ func TestPubSub(t *testing.T) {
 	}()
 
 	assert.Equal(t, 2, count)
+
+	ps.Stop(stop.NoWait)
+	ps2.Stop(stop.NoWait)
+	<-ps.StopChan()
+	<-ps2.StopChan()
 
 }
