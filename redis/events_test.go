@@ -11,9 +11,7 @@ import (
 
 func TestEvents(t *testing.T) {
 
-	if !initRedis() {
-		t.Skip("Cannot start redis - skipping.")
-	}
+	ensureRedis(t)
 
 	r := redis.NewPubSubTransport("127.0.0.1:6379")
 	data := []byte(`testing`)
@@ -54,7 +52,5 @@ loop:
 	assert.Equal(t, 2, count)
 
 	r.Stop()
-
-	stopRedis()
 
 }

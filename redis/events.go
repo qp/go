@@ -1,12 +1,14 @@
 package redis
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
+	"github.com/stretchr/pat/stop"
 )
 
 // events implements the Transport interface using
@@ -18,10 +20,11 @@ type events struct {
 	lock      sync.Mutex
 	once      sync.Once
 	kill      chan struct{}
+	killed    chan struct{}
 	running   uint32
 }
 
-// ensure events is a valid qp.EventTransport
+// ensure events is a valid qp.PubSubTransport
 var _ qp.PubSubTransport = (*events)(nil)
 
 // NewPubSubTransport initializes a Redis qp.EventTransport.
@@ -41,6 +44,7 @@ func NewPubSubTransport(url string) qp.PubSubTransport {
 		pool:      pool,
 		listeners: []string{},
 		kill:      make(chan struct{}),
+		killed:    make(chan struct{}),
 	}
 }
 
@@ -90,11 +94,18 @@ func (r *events) Start() error {
 }
 
 // Stop spins down the r transport processing system
-func (r *events) Stop() {
-	close(r.kill)
-	r.kill = make(chan struct{})
-	r.once = sync.Once{}
-	atomic.StoreUint32(&r.running, 0)
+func (r *events) Stop() <-chan stop.Signal {
+	c := stop.Make()
+	go func() {
+		close(r.kill)
+		<-r.killed
+		r.kill = make(chan struct{})
+		r.killed = make(chan struct{})
+		r.once = sync.Once{}
+		atomic.StoreUint32(&r.running, 0)
+		c <- stop.Done
+	}()
+	return c
 }
 
 // SetTimeout is a no-op for event transports as there
@@ -106,27 +117,39 @@ func (r *events) processMessages() {
 	r.lock.Lock()
 	listeners := r.listeners
 	r.lock.Unlock()
-	for _, c := range listeners {
-		go func(channel string) {
-			conn := r.pool.Get()
-			psc := redis.PubSubConn{Conn: conn}
-			psc.PSubscribe(channel)
-		loop:
-			for {
-				select {
-				case <-r.kill:
-					break loop
-				default:
-					switch v := psc.Receive().(type) {
-					case redis.PMessage:
-						go r.callback(&qp.Message{Source: v.Channel, Data: v.Data})
-					case error:
+	go func() {
+		var wg sync.WaitGroup
+		wg.Add(len(listeners))
+
+		for _, c := range listeners {
+			go func(channel string) {
+				conn := r.pool.Get()
+				psc := redis.PubSubConn{Conn: conn}
+				psc.PSubscribe(channel)
+			loop:
+				for {
+					select {
+					case <-r.kill:
 						break loop
+					default:
+						switch v := psc.Receive().(type) {
+						case redis.PMessage:
+							go r.callback(&qp.Message{Source: v.Channel, Data: v.Data})
+						case error:
+							fmt.Printf("error when receviing: %#v\n", v)
+							break loop
+						}
 					}
 				}
-			}
-			psc.PUnsubscribe(channel)
-			conn.Close()
-		}(c)
-	}
+				psc.PUnsubscribe(channel)
+				conn.Close()
+				wg.Done()
+			}(c)
+		}
+
+		wg.Wait()
+		// all listeners have closed
+		r.killed <- struct{}{}
+	}()
+
 }

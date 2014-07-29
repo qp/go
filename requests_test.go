@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: use test transports
+
 var requestTests = []struct {
 	name      string
 	pre       func() bool

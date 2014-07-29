@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stretchr/pat/stop"
+
 	"github.com/qp/go"
 )
 
@@ -98,5 +100,6 @@ func (i *requests) Start() error {
 }
 
 // Stop is a no-op for the InProc transport.
-func (i *requests) Stop() {
+func (i *requests) Stop() <-chan stop.Signal {
+	return stop.Stopped()
 }

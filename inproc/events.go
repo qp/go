@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stretchr/pat/stop"
+
 	"github.com/qp/go"
 )
 
@@ -24,6 +26,9 @@ type events struct {
 	callback qp.MessageFunc
 	wrapped  qp.PubSubTransport
 }
+
+// ensure events is a valid qp.PubSubTransport
+var _ qp.PubSubTransport = (*events)(nil)
 
 var evtQueue = make(chan *qp.Message)
 var evtChannels = map[string][]*events{}
@@ -118,7 +123,8 @@ func (i *events) Start() error {
 }
 
 // Stop is a no-op for the InProc transport.
-func (i *events) Stop() {
+func (i *events) Stop() <-chan stop.Signal {
+	return stop.Stopped()
 }
 
 // SetTimeout is a no-op for the InProc transport

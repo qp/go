@@ -37,7 +37,7 @@ type Requester struct {
 	name         string
 	responseName string
 	codec        Codec
-	transport    RequestTransport
+	transport    SenderTransport
 	resolver     *reqResolver
 	mapper       *reqMapper
 }
@@ -45,7 +45,7 @@ type Requester struct {
 // NewRequester creates a new request messenger that allows direct communication between
 // two endpoints in the qp system. It also allows for pipelining through multiple specified
 // endpoints.
-func NewRequester(name, instanceName string, codec Codec, transport RequestTransport) *Requester {
+func NewRequester(name, instanceName string, codec Codec, transport SenderTransport) *Requester {
 	if instanceName == "" {
 		instanceName = uuid.New()
 	}

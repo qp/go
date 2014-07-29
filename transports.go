@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type Signal struct{}
+
 // ErrTransportStopped is returned when an method is
 // called on a stopped transport.
 var ErrTransportStopped = errors.New("transport is stopped")
@@ -17,47 +19,29 @@ type Message struct {
 	Data []byte
 }
 
-// MessageFunc is the signature for a Message Received Callback.
-type MessageFunc func(bm *Message)
-
-// RequestTransport describes types capable of making Requests and
-// getting responses.
-type RequestTransport interface {
-	// Starts the transport.
-	Start() error
-	// Stops the transport.
-	Stop()
-	// Registers a MessageFunc the will be called when a
-	// message is received.
-	OnMessage(messageFunc MessageFunc)
-	// SetTimeout sets the amount of time in-flight requests have
-	// to complete before being shut down.
-	SetTimeout(timeout time.Duration)
-	// ListenFor listens for messages on the specified channel.
-	ListenFor(channel string)
-	// Send sends a message of data to the specified destination.
-	Send(to string, data []byte) error
+type Handler interface {
+	Handle(msg *Message)
 }
 
-// PubSubTransport describes types capable of firing and listening
-// for events.
+// HandlerFunc is the signature for a Message Received Callback.
+type HandlerFunc func(msg *Message)
+
+func (f HandlerFunc) Handle(msg *Message) {
+	f(msg)
+}
+
 type PubSubTransport interface {
-	// Starts the transport.
 	Start() error
-	// Stops the transport.
 	Stop()
-	// Registers a MessageFunc the will be called when a
-	// message is received.
-	OnMessage(messageFunc MessageFunc)
-	// SetTimeout sets the amount of time in-flight requests have
-	// to complete before being shut down.
-	SetTimeout(timeout time.Duration)
-	// ListenFor listens for messages on the specified channel.
-	ListenFor(channel string)
-	// Send sends a message of data to the specified destination.
-	Send(to string, data []byte) error
-	// ListenForChildren listens for messages on the specified channel
-	// or any of its children. See PubSub.SubscribeChildren for more
-	// information.
-	ListenForChildren(channel string)
+	StopChan() <-chan Signal
+	Publish(channel string, data interface{})
+	Subscribe(channel string, handler Handler)
+}
+
+type SenderTransport interface {
+	Start() error
+	Stop(wait time.Duration)
+	StopChan() <-chan Signal
+	Send(channel string, data interface{})
+	OnMessage(channel string, handler Handler)
 }

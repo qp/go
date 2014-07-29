@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
+	"github.com/stretchr/pat/stop"
 )
 
 // requests implements the Transport interface using
@@ -20,6 +22,7 @@ type requests struct {
 	lock      sync.Mutex
 	once      sync.Once
 	kill      chan struct{}
+	killed    chan struct{}
 	running   uint32
 	timeout   time.Duration
 }
@@ -41,6 +44,7 @@ func NewReqTransport(url string) qp.RequestTransport {
 		pool:      pool,
 		listeners: []string{},
 		kill:      make(chan struct{}),
+		killed:    make(chan struct{}),
 		timeout:   5 * time.Second,
 	}
 }
@@ -82,11 +86,25 @@ func (r *requests) Start() error {
 }
 
 // Stop spins down the requests transport processing system
-func (r *requests) Stop() {
-	close(r.kill)
-	r.kill = make(chan struct{})
-	r.once = sync.Once{}
-	atomic.StoreUint32(&r.running, 0)
+func (r *requests) Stop() <-chan struct{} {
+	fmt.Println("STOP")
+	c := stop.Make()
+	go func() {
+		c <- stop.Done
+		fmt.Println("above kill")
+		close(r.kill)
+		<-r.killed
+		fmt.Println("killed came back, resetting")
+		r.kill = make(chan struct{})
+		r.killed = make(chan struct{})
+		r.once = sync.Once{}
+		atomic.StoreUint32(&r.running, 0)
+		fmt.Println("sending stop done for stop chan", c)
+		//c <- stop.Done
+		fmt.Println("finished sending stop")
+	}()
+	fmt.Println("returning stop chan", c)
+	return c
 }
 
 // SetTimeout sets the timeout to the given value.
@@ -102,49 +120,68 @@ func (r *requests) processMessages() {
 	r.lock.Lock()
 	listeners := r.listeners
 	r.lock.Unlock()
-	for _, c := range listeners {
-		go func(channel string) {
-			var data []byte
-			done := make(chan struct{})
-			for {
-				conn := r.pool.Get()
-				select {
-				case <-r.kill:
-					go func() {
-						select {
-						case <-time.After(r.timeout):
+	fmt.Println("pmesgs")
+	go func() {
+		var wg sync.WaitGroup
+		wg.Add(len(listeners))
+		fmt.Println("about to listen on", listeners)
+		for _, c := range listeners {
+			fmt.Println("listening on ", c)
+			go func(channel string) {
+				var data []byte
+				done := make(chan struct{})
+				for {
+					conn := r.pool.Get()
+					select {
+					case <-r.kill:
+						fmt.Println("got kill")
+						r.kill = nil
+						go func() {
+							time.Sleep(r.timeout)
+							fmt.Println("sending done")
 							done <- struct{}{}
-						}
-					}()
-				case <-done:
-					conn.Close()
-					return
-				default:
-					// BRPOP on the channel to wait for a new message
-					message, err := redis.Values(conn.Do("BRPOP", channel, "0"))
-					if err != nil {
-						// Did we get a timeout? That's fine. Continue.
-						if netErr, ok := err.(net.Error); ok {
-							if netErr.Timeout() {
+						}()
+					case <-done:
+						conn.Close()
+						done = nil
+						fmt.Println("wg done")
+						wg.Done()
+						return
+					default:
+						// BRPOP on the channel to wait for a new message
+						message, err := redis.Values(conn.Do("BRPOP", channel, "1"))
+						log.Printf("ERROR FROM VALUES: %#v", err)
+						if err != nil {
+							// Did we get a timeout? That's fine. Continue.
+							if err == redis.ErrNil {
 								continue
 							}
+							// or a network timeout... also fine
+							if netErr, ok := err.(net.Error); ok {
+								if netErr.Timeout() {
+									continue
+								}
+							}
+							// Not a timeout? Something went wrong.
+							// TODO: Log this out.. maybe fire a metric to the logging endpoint
+							fmt.Println("Error trying to BRPOP", err)
+							conn.Close()
+							return
 						}
-						// Not a timeout? Something went wrong.
-						// TODO: Log this out.. maybe fire a metric to the logging endpoint
-						fmt.Println("Error trying to BRPOP", err)
+						if _, err := redis.Scan(message, &channel, &data); err != nil {
+							// there was an error decoding the message into the data field
+							// TODO: Log this out.. maybe fire a metric to the logging endpoint
+							fmt.Println("Error trying to Scan", err)
+							continue
+						}
+						go r.callback(&qp.Message{Source: channel, Data: data})
 						conn.Close()
-						return
 					}
-					if _, err := redis.Scan(message, &channel, &data); err != nil {
-						// there was an error decoding the message into the data field
-						// TODO: Log this out.. maybe fire a metric to the logging endpoint
-						conn.Close()
-						return
-					}
-					go r.callback(&qp.Message{Source: channel, Data: data})
-					conn.Close()
 				}
-			}
-		}(c)
-	}
+			}(c)
+		}
+		wg.Wait()
+		fmt.Println("sending killed")
+		r.killed <- struct{}{}
+	}()
 }
