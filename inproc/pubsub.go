@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/pat/stop"
 )
 
-var nothing = struct{}{}
+var exists = struct{}{}
 
 // PubSub represents a qp.PubSubTransport.
 type PubSub struct {
@@ -31,7 +31,7 @@ func NewPubSub() *PubSub {
 		stopChan: stop.Make(),
 	}
 	pubSubLock.Lock()
-	pubSubInstances[p] = nothing
+	pubSubInstances[p] = exists
 	pubSubLock.Unlock()
 	return p
 }

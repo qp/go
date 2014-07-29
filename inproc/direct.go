@@ -29,7 +29,7 @@ func NewDirect() *Direct {
 		stopChan: stop.Make(),
 	}
 	directLock.Lock()
-	directInstances[p] = nothing
+	directInstances[p] = exists
 	directLock.Unlock()
 	return p
 }
