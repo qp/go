@@ -33,7 +33,9 @@ func (f HandlerFunc) Handle(msg *Message) {
 // providing publish/subscribe capabilities.
 type PubSubTransport interface {
 	StartStopper
+	// Publish publishes data on the specified channel.
 	Publish(channel string, data []byte) error
+	// Subscribe binds the handler to the specified channel.
 	Subscribe(channel string, handler Handler) error
 }
 
@@ -41,6 +43,8 @@ type PubSubTransport interface {
 // providing request/response capabilities.
 type DirectTransport interface {
 	StartStopper
+	// Send sends data on the channel.
 	Send(channel string, data []byte) error
+	// OnMessage binds the handler to the specified channel.
 	OnMessage(channel string, handler Handler) error
 }
