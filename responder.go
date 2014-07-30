@@ -58,7 +58,7 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 		// at this point, the caller has mutated the data.
 		// forward this request object to the next endpoint
-		to := ""
+		var to string
 		if len(request.To) != 0 {
 			// pop off the first to
 			to = request.To[0]
