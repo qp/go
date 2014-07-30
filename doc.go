@@ -5,9 +5,9 @@
 // code from your application, while gaining additional functionality,
 // such as QP's pipeline concept.
 //
-// PubSub
+// Publish and Subscribe
 //
-// The publish/subscribe model is achieved by using the Publisher and
+// The pubsub model is achieved by using the Publisher and
 // Subscriber types, which expose Publish and Subscribe methods
 // respectively.
 //
