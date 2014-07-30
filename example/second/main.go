@@ -16,7 +16,7 @@ func main() {
 
 	// create our service
 	t := redis.NewDirect("127.0.0.1:6379")
-	qp.NewService("second", "one", qp.JSON, t,
+	qp.Service("second", "one", qp.JSON, t,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			d, _ := json.Marshal(r)
 			fmt.Println("Hello from second!", string(d))
