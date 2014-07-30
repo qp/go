@@ -12,11 +12,10 @@ import (
 
 func TestServiceHandler(t *testing.T) {
 	d := inproc.NewDirect()
-	s := qp.NewService("name", "instance", qp.JSON, d,
+	qp.Service("name", "instance", qp.JSON, d,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			r.Data = "hit"
 		}))
-	require.NotNil(t, s)
 
 	defer func() {
 		d.Stop(stop.NoWait)
@@ -35,21 +34,18 @@ func TestServiceHandler(t *testing.T) {
 
 func TestServiceMultiple(t *testing.T) {
 	d := inproc.NewDirect()
-	s := qp.NewService("name", "instance", qp.JSON, d,
+	qp.Service("name", "instance", qp.JSON, d,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			r.Data = append(r.Data.([]interface{}), "first")
 		}))
-	s2 := qp.NewService("name2", "instance", qp.JSON, d,
+	qp.Service("name2", "instance", qp.JSON, d,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			r.Data = append(r.Data.([]interface{}), "second")
 		}))
-	s3 := qp.NewService("name3", "instance", qp.JSON, d,
+	qp.Service("name3", "instance", qp.JSON, d,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			r.Data = append(r.Data.([]interface{}), "third")
 		}))
-	require.NotNil(t, s)
-	require.NotNil(t, s2)
-	require.NotNil(t, s3)
 
 	defer func() {
 		d.Stop(stop.NoWait)
