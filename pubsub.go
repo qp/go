@@ -11,8 +11,14 @@ type Event struct {
 	Data interface{} `json:"data"`
 }
 
-// Publisher allows events to be published.
-type Publisher struct {
+// Publisher represents types capable of publishing events.
+type Publisher interface {
+	// Publish publishes the object on the specified channel.
+	Publish(channel string, obj interface{}) error
+}
+
+// publisher allows events to be published.
+type publisher struct {
 	name       string
 	instanceID string
 	uniqueID   string
@@ -21,8 +27,8 @@ type Publisher struct {
 }
 
 // NewPublisher makes a new publisher capable of Publishing events.
-func NewPublisher(name, instanceID string, codec Codec, transport PubSubTransport) *Publisher {
-	return &Publisher{
+func NewPublisher(name, instanceID string, codec Codec, transport PubSubTransport) Publisher {
+	return &publisher{
 		name:       name,
 		instanceID: instanceID,
 		uniqueID:   name + "." + instanceID,
@@ -31,8 +37,7 @@ func NewPublisher(name, instanceID string, codec Codec, transport PubSubTranspor
 	}
 }
 
-// Publish publishes the object on the specified channel.
-func (p *Publisher) Publish(channel string, obj interface{}) error {
+func (p *publisher) Publish(channel string, obj interface{}) error {
 
 	event := &Event{From: p.uniqueID, Data: obj}
 	data, err := p.codec.Marshal(event)
@@ -61,20 +66,28 @@ func (f EventHandlerFunc) Handle(r *Event) {
 	f(r)
 }
 
-// Subscriber allows events to be subscribed to.
-type Subscriber struct {
+// Subscriber represents types capable of subscribing to
+// events.
+type Subscriber interface {
+	// Subscribe binds the handler to the specified channel.
+	Subscribe(channel string, handler EventHandler) error
+	// SubscribeFunc binds the EventHandlerFunc to the specified channel.
+	SubscribeFunc(channel string, fn EventHandlerFunc) error
+}
+
+// subscriber allows events to be subscribed to.
+type subscriber struct {
 	codec     Codec
 	transport PubSubTransport
 }
 
 // NewSubscriber creates a Subscriber object capable of subscribing
 // to events.
-func NewSubscriber(codec Codec, transport PubSubTransport) *Subscriber {
-	return &Subscriber{codec: codec, transport: transport}
+func NewSubscriber(codec Codec, transport PubSubTransport) Subscriber {
+	return &subscriber{codec: codec, transport: transport}
 }
 
-// Subscribe binds the handler to the specified channel.
-func (s *Subscriber) Subscribe(channel string, handler EventHandler) error {
+func (s *subscriber) Subscribe(channel string, handler EventHandler) error {
 	return s.transport.Subscribe(channel, HandlerFunc(func(msg *Message) {
 
 		var event Event
@@ -88,7 +101,6 @@ func (s *Subscriber) Subscribe(channel string, handler EventHandler) error {
 	}))
 }
 
-// SubscribeFunc binds the EventHandlerFunc to the specified channel.
-func (s *Subscriber) SubscribeFunc(channel string, fn EventHandlerFunc) error {
+func (s *subscriber) SubscribeFunc(channel string, fn EventHandlerFunc) error {
 	return s.Subscribe(channel, fn)
 }

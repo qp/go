@@ -34,8 +34,20 @@ func newRequest(endpoint string, object interface{}, pipeline []string) *Request
 	return &Request{To: pipeline, From: []string{endpoint}, ID: unique(), Data: object}
 }
 
+// Requester represents a type capable of issuing requests and getting
+// responses.
+type Requester interface {
+	// Issue issues the request and returns a Future from which you can
+	// get the response.
+	// The pipeline may be one or more endpoints. If it is more than one, each will receive
+	// the message, in order, and have an opportunity to mutate it before it is dispatched
+	// to the next endpoint in the pipeline.
+	// The provided object will be serialized and send as the "data" field in the message.
+	Issue(pipeline []string, obj interface{}) (*Future, error)
+}
+
 // Requester makes requests.
-type Requester struct {
+type requester struct {
 	name            string
 	instanceID      string
 	codec           Codec
@@ -45,8 +57,8 @@ type Requester struct {
 }
 
 // NewRequester makes a new object capable of making requests and handling responses.
-func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) *Requester {
-	r := &Requester{
+func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) Requester {
+	r := &requester{
 		transport: transport,
 		codec:     codec,
 		resolver:  newResolver(),
@@ -68,13 +80,7 @@ func NewRequester(name, instanceID string, codec Codec, transport DirectTranspor
 	return r
 }
 
-// Issue issues the request and returns a Future from which you can
-// get the response.
-// The pipeline may be one or more endpoints. If it is more than one, each will receive
-// the message, in order, and have an opportunity to mutate it before it is dispatched
-// to the next endpoint in the pipeline.
-// The provided object will be serialized and send as the "data" field in the message.
-func (r *Requester) Issue(pipeline []string, obj interface{}) (*Future, error) {
+func (r *requester) Issue(pipeline []string, obj interface{}) (*Future, error) {
 
 	request := newRequest(r.responseChannel, obj, pipeline[1:])
 	to := pipeline[0]

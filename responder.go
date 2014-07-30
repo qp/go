@@ -17,8 +17,16 @@ func (f RequestHandlerFunc) Handle(r *Request) {
 	f(r)
 }
 
-// Responder responds to requests.
-type Responder struct {
+// Responder represents types capable of responding to requests.
+type Responder interface {
+	// Handle binds a RequestHandler to the specified channel.
+	Handle(channel string, handler RequestHandler) error
+	// HandleFunc binds the specified function to the specified channel.
+	HandleFunc(channel string, f RequestHandlerFunc) error
+}
+
+// responder responds to requests.
+type responder struct {
 	name       string
 	instanceID string
 	uniqueID   string
@@ -27,8 +35,8 @@ type Responder struct {
 }
 
 // NewResponder makes a new object capable of responding to requests.
-func NewResponder(name, instanceID string, codec Codec, transport DirectTransport) *Responder {
-	r := &Responder{
+func NewResponder(name, instanceID string, codec Codec, transport DirectTransport) Responder {
+	r := &responder{
 		codec:     codec,
 		transport: transport,
 		uniqueID:  name + "." + instanceID,
@@ -36,8 +44,7 @@ func NewResponder(name, instanceID string, codec Codec, transport DirectTranspor
 	return r
 }
 
-// Handle binds a RequestHandler to the specified channel.
-func (r *Responder) Handle(channel string, handler RequestHandler) error {
+func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 	r.transport.OnMessage(channel, HandlerFunc(func(msg *Message) {
 
@@ -77,7 +84,6 @@ func (r *Responder) Handle(channel string, handler RequestHandler) error {
 	return nil
 }
 
-// HandleFunc binds the specified function to the specified channel.
-func (r *Responder) HandleFunc(channel string, f RequestHandlerFunc) error {
+func (r *responder) HandleFunc(channel string, f RequestHandlerFunc) error {
 	return r.Handle(channel, f)
 }
