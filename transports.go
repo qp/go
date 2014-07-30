@@ -40,6 +40,8 @@ type PubSubTransport interface {
 	// Publish publishes data on the specified channel.
 	Publish(channel string, data []byte) error
 	// Subscribe binds the handler to the specified channel.
+	// Only one handler can be associated with a given channel.
+	// Multiple calls to Subscribe with the same channel will replace the previous handler.
 	Subscribe(channel string, handler Handler) error
 }
 
@@ -50,5 +52,7 @@ type DirectTransport interface {
 	// Send sends data on the channel.
 	Send(channel string, data []byte) error
 	// OnMessage binds the handler to the specified channel.
+	// Only one handler can be associated with a given channel.
+	// Multiple calls to OnMessage wiht the same channel will replace the previous handler.
 	OnMessage(channel string, handler Handler) error
 }
