@@ -35,3 +35,15 @@ func (l loggers) Println(v ...interface{}) {
 		logger.Println(v...)
 	}
 }
+
+// NilLogger represents a Logger that ignores all calls.
+var NilLogger Logger = nilLoggerI
+
+// nilLoggerI is the nil instance of nilLogger
+var nilLoggerI *nilLogger
+
+type nilLogger struct{}
+
+func (l *nilLogger) Printf(format string, v ...interface{}) {}
+func (l *nilLogger) Print(v ...interface{})                 {}
+func (l *nilLogger) Println(v ...interface{})               {}

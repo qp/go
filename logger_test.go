@@ -30,7 +30,7 @@ func TestLoggers(t *testing.T) {
 	l2 := &logger{}
 	l3 := &logger{}
 	var ls qp.Logger
-	ls = qp.Loggers(l1, l2, l3)
+	ls = qp.Loggers(l1, l2, l3, qp.NilLogger)
 
 	ls.Print("one")
 	ls.Printf("%s", "two")
