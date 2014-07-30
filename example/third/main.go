@@ -16,13 +16,12 @@ func main() {
 
 	// create our service
 	t := redis.NewDirect("127.0.0.1:6379")
-	s := qp.NewService("third", "one", qp.JSON, t)
-	s.Handler = qp.RequestHandlerFunc(func(r *qp.Request) {
-		d, _ := json.Marshal(r)
-		fmt.Println("Hello from third!", string(d))
-		r.Data.(map[string]interface{})["messages"] = append(r.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the third service at "+time.Now().String())
-
-	})
+	qp.NewService("third", "one", qp.JSON, t,
+		qp.RequestHandlerFunc(func(r *qp.Request) {
+			d, _ := json.Marshal(r)
+			fmt.Println("Hello from third!", string(d))
+			r.Data.(map[string]interface{})["messages"] = append(r.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the third service at "+time.Now().String())
+		}))
 
 	err := t.Start()
 	if err != nil {

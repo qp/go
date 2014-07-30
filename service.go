@@ -13,21 +13,16 @@ package qp
 // By default, a Service will simply forward the message to
 // the next endpoint.
 type Service struct {
-	Handler   RequestHandler
 	responder Responder
 }
 
 // NewService creates a new Service. It automatically subscribes to a channel
 // of its own name and forwards messages by default. If a "Handler" is set, it
 // will be called.
-func NewService(name, instanceID string, codec Codec, transport DirectTransport) *Service {
+func NewService(name, instanceID string, codec Codec, transport DirectTransport, handler RequestHandler) *Service {
 	s := &Service{
 		responder: NewResponder(name, instanceID, codec, transport),
 	}
-	s.responder.HandleFunc(name, func(r *Request) {
-		if s.Handler != nil {
-			s.Handler.Handle(r)
-		}
-	})
+	s.responder.Handle(name, handler)
 	return s
 }
