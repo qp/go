@@ -4,12 +4,12 @@ import "log"
 
 // RequestHandler represents types capable of handling Requests.
 type RequestHandler interface {
-	Handle(*Request)
+	Handle(r *Request)
 }
 
 // RequestHandlerFunc represents functions capable of handling
 // Requests.
-type RequestHandlerFunc func(*Request)
+type RequestHandlerFunc func(r *Request)
 
 // Handle calls the RequestHandlerFunc in order to handle
 // the specific Request.
