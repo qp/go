@@ -78,7 +78,7 @@ func (d *Direct) processMessages() {
 						return
 					default:
 						conn := d.pool.Get()
-						if err := handleMessage(conn, channel, handler); err != nil {
+						if err := d.handleMessage(conn, channel, handler); err != nil {
 							log.Println("TODO: handle this error properly:", err)
 						}
 						conn.Close()
@@ -89,7 +89,7 @@ func (d *Direct) processMessages() {
 	}()
 }
 
-func handleMessage(conn redis.Conn, channel string, handler qp.Handler) error {
+func (d *Direct) handleMessage(conn redis.Conn, channel string, handler qp.Handler) error {
 	var data []byte
 	// BRPOP on the channel to wait for a new message
 	message, err := redis.Values(conn.Do("BRPOP", channel, "1"))
@@ -129,11 +129,11 @@ func (d *Direct) Start() error {
 //
 // In-flight requests will have "wait" duration to complete
 // before being abandoned.
-func (d *Direct) Stop(wait time.Duration) {
+func (d *Direct) Stop(grace time.Duration) {
 	// stop processing new Sends
 	atomic.StoreUint32(&d.running, 0)
 	// wait for duration to allow in-flight requests to finish
-	time.Sleep(wait)
+	time.Sleep(grace)
 	// instruct all receiving goroutines to shutdown
 	close(d.shutdown)
 	// inform caller of stop complete
