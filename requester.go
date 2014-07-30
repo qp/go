@@ -10,12 +10,10 @@ type errResolving struct {
 	ID RequestID
 }
 
+// Error gets a string that describes this error.
 func (e errResolving) Error() string {
 	return "qp: Failed to resolve response " + string(e.ID)
 }
-
-// RequestID represents a unique ID for a Request.
-type RequestID uint64
 
 // Request defines all the fields and information
 // in the standard qp request object. It is used

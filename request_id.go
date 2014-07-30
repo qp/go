@@ -2,6 +2,9 @@ package qp
 
 import "sync/atomic"
 
+// RequestID represents a unique ID for a Request.
+type RequestID uint64
+
 // u holds the last unique number.
 var u uint64
 
