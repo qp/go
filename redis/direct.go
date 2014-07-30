@@ -25,25 +25,34 @@ type Direct struct {
 // ensure the interface is satisfied
 var _ qp.DirectTransport = (*Direct)(nil)
 
-// NewDirect makes a new direct transport.
+// NewDirect makes a new Direct redis transport.
 func NewDirect(url string) *Direct {
+	return NewDirectTimeout(url, 1*time.Second, 1*time.Second, 1*time.Second)
+}
+
+// NewDirectTimeout makes a new Direct redis transport and allows you to specify timeout values.
+func NewDirectTimeout(url string, connectTimeout, readTimeout, writeTimeout time.Duration) *Direct {
+	if readTimeout == 0 {
+		readTimeout = 1 * time.Second
+	}
 	var pool = &redis.Pool{
 		MaxIdle:     8,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.DialTimeout("tcp", url, 1*time.Second, 0, 0)
+			c, err := redis.DialTimeout("tcp", url, connectTimeout, readTimeout, writeTimeout)
 			if err != nil {
 				return nil, err
 			}
 			return c, err
 		},
 	}
-	return &Direct{
+	p := &Direct{
 		pool:     pool,
-		stopChan: stop.Make(),
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
+		stopChan: stop.Make(),
 	}
+	return p
 }
 
 // Send sends data on the channel.

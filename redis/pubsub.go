@@ -2,6 +2,7 @@ package redis
 
 import (
 	"log"
+	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -24,13 +25,21 @@ type PubSub struct {
 // ensure the interface is satisfied
 var _ qp.PubSubTransport = (*PubSub)(nil)
 
-// NewPubSub makes a new PubSub.
+// NewPubSub makes a new PubSub redis transport.
 func NewPubSub(url string) *PubSub {
+	return NewPubSubTimeout(url, 1*time.Second, 1*time.Second, 1*time.Second)
+}
+
+// NewPubSubTimeout makes a new PubSub redis transport and allows you to specify timeout values.
+func NewPubSubTimeout(url string, connectTimeout, readTimeout, writeTimeout time.Duration) *PubSub {
+	if readTimeout == 0 {
+		readTimeout = 1 * time.Second
+	}
 	var pool = &redis.Pool{
 		MaxIdle:     8,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.DialTimeout("tcp", url, 1*time.Second, 0, 0)
+			c, err := redis.DialTimeout("tcp", url, connectTimeout, readTimeout, writeTimeout)
 			if err != nil {
 				return nil, err
 			}
@@ -86,6 +95,12 @@ func (p *PubSub) processMessages() {
 						case redis.PMessage:
 							go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
 						case error:
+							// Network timeout is fine also.
+							if netErr, ok := v.(net.Error); ok {
+								if netErr.Timeout() {
+									continue
+								}
+							}
 							log.Println("TODO: handle this error properly:", v)
 						}
 					}
