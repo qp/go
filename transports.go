@@ -3,8 +3,12 @@ package qp
 import "errors"
 
 // ErrNotRunning is returned when an method is
-// called on a transport at is not running.
+// called on a transport that is not running.
 var ErrNotRunning = errors.New("transport is not running")
+
+// ErrNotRunning is returned when an method is
+// called on a transport that is running.
+var ErrRunning = errors.New("transport is running")
 
 // Message represents a single message of data and its source.
 type Message struct {
