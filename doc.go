@@ -19,4 +19,11 @@
 //
 // Building services that respond to requests can be achieved by using
 // the Responder type, which exposes the Handle method.
+//
+// Name and instance ID
+//
+// Most types require a name and instance ID. The name describes the type
+// of capability being provided.  Instance ID allows for many things of the
+// same type to coexist.  All name and instance ID combinations must be
+// unique within a system.
 package qp
