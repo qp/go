@@ -2,8 +2,14 @@ package qp
 
 // Logger represents a type capable of logging errors.
 type Logger interface {
+	// Printf prints to the log.
+	// Arguments are handled in the manner of fmt.Print.
 	Printf(format string, v ...interface{})
+	// Print prints to the log.
+	// Arguments are handled in the manner of fmt.Print.
 	Print(v ...interface{})
+	// Println prints to the log.
+	// Arguments are handled in the manner of fmt.Print.
 	Println(v ...interface{})
 }
 

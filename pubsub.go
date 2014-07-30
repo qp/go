@@ -1,7 +1,5 @@
 package qp
 
-import "log"
-
 // Event defines all the fields and information
 // included as part of a Event to a request.
 type Event struct {
@@ -79,12 +77,19 @@ type Subscriber interface {
 type subscriber struct {
 	codec     Codec
 	transport PubSubTransport
+	log       Logger
 }
 
 // NewSubscriber creates a Subscriber object capable of subscribing
 // to events.
 func NewSubscriber(codec Codec, transport PubSubTransport) Subscriber {
-	return &subscriber{codec: codec, transport: transport}
+	return NewSubscriberLogger(codec, transport, NilLogger)
+}
+
+// NewSubscriberLogger creates a Subscriber object capable of subscribing
+// to events, while logging errors to the specified logger.
+func NewSubscriberLogger(codec Codec, transport PubSubTransport, logger Logger) Subscriber {
+	return &subscriber{codec: codec, transport: transport, log: logger}
 }
 
 func (s *subscriber) Subscribe(channel string, handler EventHandler) error {
@@ -92,7 +97,7 @@ func (s *subscriber) Subscribe(channel string, handler EventHandler) error {
 
 		var event Event
 		if err := s.codec.Unmarshal(msg.Data, &event); err != nil {
-			log.Println("TODO: Handle unmsrshal error in Subscribe:", err)
+			s.log.Println("TODO: Handle unmsrshal error in Subscribe:", err)
 			return
 		}
 

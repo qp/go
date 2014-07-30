@@ -1,7 +1,5 @@
 package qp
 
-import "log"
-
 // RequestHandler represents types capable of handling Requests.
 type RequestHandler interface {
 	Handle(r *Request)
@@ -32,16 +30,23 @@ type responder struct {
 	uniqueID   string
 	codec      Codec
 	transport  DirectTransport
+	log        Logger
 }
 
 // NewResponder makes a new object capable of responding to requests.
 func NewResponder(name, instanceID string, codec Codec, transport DirectTransport) Responder {
-	r := &responder{
+	return NewResponderLogger(name, instanceID, codec, transport, NilLogger)
+}
+
+// NewResponderLogger makes a new object capable of responding to requests, which
+// will log errors to the specified Logger.
+func NewResponderLogger(name, instanceID string, codec Codec, transport DirectTransport, logger Logger) Responder {
+	return &responder{
 		codec:     codec,
 		transport: transport,
 		uniqueID:  name + "." + instanceID,
+		log:       logger,
 	}
-	return r
 }
 
 func (r *responder) Handle(channel string, handler RequestHandler) error {
@@ -50,7 +55,7 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 		var request Request
 		if err := r.codec.Unmarshal(msg.Data, &request); err != nil {
-			log.Println("TODO: Handle unmarshal error", err)
+			r.log.Println("TODO: Handle unmarshal error", err)
 			return
 		}
 
@@ -72,7 +77,7 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 		// encode the data
 		data, err := r.codec.Marshal(request)
 		if err != nil {
-			log.Println("Error encoding data for pipeline:", err.Error())
+			r.log.Println("Error encoding data for pipeline:", err.Error())
 			return
 		}
 
