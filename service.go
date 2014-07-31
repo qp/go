@@ -10,5 +10,11 @@ package qp
 // the next endpoint, unless the request is mutated by the
 // handler.
 func Service(name, instanceID string, codec Codec, transport DirectTransport, handler RequestHandler) {
-	NewResponder(name, instanceID, codec, transport).Handle(name, handler)
+	ServiceLogger(name, instanceID, codec, transport, NilLogger, handler)
+}
+
+// ServiceLogger does the same thing as Service but also uses the
+// specified Logger to log to.
+func ServiceLogger(name, instanceID string, codec Codec, transport DirectTransport, logger Logger, handler RequestHandler) {
+	NewResponderLogger(name, instanceID, codec, transport, logger).Handle(name, handler)
 }
