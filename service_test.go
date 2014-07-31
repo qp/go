@@ -16,7 +16,8 @@ func TestServiceHandler(t *testing.T) {
 	qp.Service("name", "instance", qp.JSON, d,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			r.Data = "hit"
-		}))
+		}),
+	)
 
 	defer func() {
 		d.Stop(stop.NoWait)
