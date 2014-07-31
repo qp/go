@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// Logger represents a type capable of logging info, warnings and errors.
+// Logger represents a type capable of logging errors.
 type Logger interface {
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
