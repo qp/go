@@ -1,7 +1,6 @@
 package qp
 
 import (
-	"log"
 	"sync"
 	"time"
 )
@@ -55,25 +54,33 @@ type requester struct {
 	transport       DirectTransport
 	responseChannel string
 	resolver        *reqResolver
+	logger          Logger
 }
 
 // NewRequester makes a new object capable of making requests and handling responses.
 func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) Requester {
+	return NewRequesterLogger(name, instanceID, codec, transport, NilLogger)
+}
+
+// NewRequesterLogger makes a new object capable of making requests and handling responses
+// with logs going to the specified Logger.
+func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger Logger) Requester {
 	r := &requester{
 		transport: transport,
 		codec:     codec,
 		resolver:  newResolver(),
+		logger:    logger,
 	}
 	r.responseChannel = name + "." + instanceID
 	r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
 		var response Response
 		if err := r.codec.Unmarshal(m.Data, &response); err != nil {
-			log.Println("TODO: handle borked response", err)
+			r.logger.Error("requester: borked response:", err)
 			return
 		}
 		go func() {
 			if err := r.resolver.Resolve(&response); err != nil {
-				log.Println("TODO: handle error", err)
+				r.logger.Error("requester: failed to resolve:", err)
 			}
 		}()
 	}))
