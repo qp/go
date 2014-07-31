@@ -5,6 +5,8 @@ The Go implementation of the QP protocol.
 
 ### Usage
 
+See the [example code](https://github.com/qp/go/tree/master/example) for a working example of how to implement Go services using QP.
+
 #### Publish
 
 Use a `NewPublisher` to publish events.
