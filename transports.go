@@ -6,7 +6,7 @@ import "errors"
 // called on a transport that is not running.
 var ErrNotRunning = errors.New("transport is not running")
 
-// ErrNotRunning is returned when an method is
+// ErrRunning is returned when an method is
 // called on a transport that is running.
 var ErrRunning = errors.New("transport is running")
 
