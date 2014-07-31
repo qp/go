@@ -12,14 +12,8 @@ type logger struct {
 	output []string
 }
 
-func (l *logger) Printf(format string, v ...interface{}) {
-	l.output = append(l.output, fmt.Sprintf(format, v...))
-}
-func (l *logger) Print(v ...interface{}) {
+func (l *logger) Error(v ...interface{}) {
 	l.output = append(l.output, fmt.Sprint(v...))
-}
-func (l *logger) Println(v ...interface{}) {
-	l.output = append(l.output, fmt.Sprintln(v...))
 }
 
 var _ qp.Logger = (*logger)(nil)
@@ -32,9 +26,9 @@ func TestLoggers(t *testing.T) {
 	var ls qp.Logger
 	ls = qp.Loggers(l1, l2, l3, qp.NilLogger)
 
-	ls.Print("one")
-	ls.Printf("%s", "two")
-	ls.Println("three")
+	ls.Error("one")
+	ls.Error("t", "w", "o")
+	ls.Error("three")
 
 	require.Equal(t, 3, len(l1.output))
 	require.Equal(t, 3, len(l2.output))
@@ -42,14 +36,14 @@ func TestLoggers(t *testing.T) {
 
 	require.Equal(t, "one", l1.output[0])
 	require.Equal(t, "two", l1.output[1])
-	require.Equal(t, "three\n", l1.output[2])
+	require.Equal(t, "three", l1.output[2])
 
 	require.Equal(t, "one", l2.output[0])
 	require.Equal(t, "two", l2.output[1])
-	require.Equal(t, "three\n", l2.output[2])
+	require.Equal(t, "three", l2.output[2])
 
 	require.Equal(t, "one", l3.output[0])
 	require.Equal(t, "two", l3.output[1])
-	require.Equal(t, "three\n", l3.output[2])
+	require.Equal(t, "three", l3.output[2])
 
 }

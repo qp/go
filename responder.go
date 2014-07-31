@@ -55,7 +55,7 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 		var request Request
 		if err := r.codec.Unmarshal(msg.Data, &request); err != nil {
-			r.log.Println("TODO: Handle unmarshal error", err)
+			r.log.Error("TODO: Handle unmarshal error", err)
 			return
 		}
 
@@ -77,7 +77,7 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 		// encode the data
 		data, err := r.codec.Marshal(request)
 		if err != nil {
-			r.log.Println("Error encoding data for pipeline:", err.Error())
+			r.log.Error("Error encoding data for pipeline:", err.Error())
 			return
 		}
 
