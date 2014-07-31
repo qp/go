@@ -15,14 +15,14 @@ type Codec interface {
 	Unmarshal(data []byte, to interface{}) error
 }
 
+// jsonCodec is a Codec that talks JSON.
+type jsonCodec struct{}
+
 // ensure jsonCodec is a Codec
 var _ Codec = (*jsonCodec)(nil)
 
 // JSON is a Codec that talks JSON.
 var JSON *jsonCodec
-
-// jsonCodec is a Codec that talks JSON.
-type jsonCodec struct{}
 
 // Marshal an object into a JSON byte slice representation
 func (_ *jsonCodec) Marshal(object interface{}) ([]byte, error) {

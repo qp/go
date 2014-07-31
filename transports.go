@@ -1,13 +1,14 @@
 package qp
 
-import (
-	"errors"
-	"time"
-)
+import "errors"
 
-// ErrTransportStopped is returned when an method is
-// called on a stopped transport.
-var ErrTransportStopped = errors.New("transport is stopped")
+// ErrNotRunning is returned when an method is
+// called on a transport that is not running.
+var ErrNotRunning = errors.New("transport is not running")
+
+// ErrNotRunning is returned when an method is
+// called on a transport that is running.
+var ErrRunning = errors.New("transport is running")
 
 // Message represents a single message of data and its source.
 type Message struct {
@@ -17,47 +18,41 @@ type Message struct {
 	Data []byte
 }
 
-// MessageFunc is the signature for a Message Received Callback.
-type MessageFunc func(bm *Message)
-
-// RequestTransport describes types capable of making Requests and
-// getting responses.
-type RequestTransport interface {
-	// Starts the transport.
-	Start() error
-	// Stops the transport.
-	Stop()
-	// Registers a MessageFunc the will be called when a
-	// message is received.
-	OnMessage(messageFunc MessageFunc)
-	// SetTimeout sets the amount of time in-flight requests have
-	// to complete before being shut down.
-	SetTimeout(timeout time.Duration)
-	// ListenFor listens for messages on the specified channel.
-	ListenFor(channel string)
-	// Send sends a message of data to the specified destination.
-	Send(to string, data []byte) error
+// Handler represents types capable of handling messages
+// from the transports.
+type Handler interface {
+	Handle(msg *Message)
 }
 
-// PubSubTransport describes types capable of firing and listening
-// for events.
+// HandlerFunc represents functions capable of handling
+// messages.
+type HandlerFunc func(msg *Message)
+
+// Handle calls the HandlerFunc.
+func (f HandlerFunc) Handle(msg *Message) {
+	f(msg)
+}
+
+// PubSubTransport represents a transport capable of
+// providing publish/subscribe capabilities.
 type PubSubTransport interface {
-	// Starts the transport.
-	Start() error
-	// Stops the transport.
-	Stop()
-	// Registers a MessageFunc the will be called when a
-	// message is received.
-	OnMessage(messageFunc MessageFunc)
-	// SetTimeout sets the amount of time in-flight requests have
-	// to complete before being shut down.
-	SetTimeout(timeout time.Duration)
-	// ListenFor listens for messages on the specified channel.
-	ListenFor(channel string)
-	// Send sends a message of data to the specified destination.
-	Send(to string, data []byte) error
-	// ListenForChildren listens for messages on the specified channel
-	// or any of its children. See PubSub.SubscribeChildren for more
-	// information.
-	ListenForChildren(channel string)
+	StartStopper
+	// Publish publishes data on the specified channel.
+	Publish(channel string, data []byte) error
+	// Subscribe binds the handler to the specified channel.
+	// Only one handler can be associated with a given channel.
+	// Multiple calls to Subscribe with the same channel will replace the previous handler.
+	Subscribe(channel string, handler Handler) error
+}
+
+// DirectTransport represents a transport capable of
+// providing request/response capabilities.
+type DirectTransport interface {
+	StartStopper
+	// Send sends data on the channel.
+	Send(channel string, data []byte) error
+	// OnMessage binds the handler to the specified channel.
+	// Only one handler can be associated with a given channel.
+	// Multiple calls to OnMessage wiht the same channel will replace the previous handler.
+	OnMessage(channel string, handler Handler) error
 }

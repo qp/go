@@ -6,43 +6,39 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/qp/go/redis"
-
 	"github.com/qp/go"
-
+	"github.com/qp/go/redis"
 	"github.com/stretchr/graceful"
 )
 
 func main() {
 
-	// create our messenger
-	m := qp.NewRequester("webserver", "one", qp.JSON, redis.NewReqTransport("127.0.0.1:6379"))
-	err := m.Start()
-	if err != nil {
-		fmt.Println("error!", err)
-	}
+	// create our requester
+	t := redis.NewDirect("127.0.0.1:6379")
+	r := qp.NewRequester("webserver", "one", qp.JSON, t)
+	t.Start()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		if req.URL.String() == "/favicon.ico" {
 			return
 		}
-		data := map[string]interface{}{
+		obj := map[string]interface{}{
 			"messages": []string{"Hello from the webserver at " + time.Now().String()},
 		}
-		r, err := m.Request(data, []string{"first", "second", "third"})
+		f, err := r.Issue([]string{"first", "second", "third"}, obj)
 		if err != nil {
-			fmt.Fprintf(w, "Unable to make request: %v\n", err)
-			return
+			fmt.Fprintf(w, "error issuing request: %v\n", err)
 		}
-		msg := r.Response()
+
+		msg := f.Response(1 * time.Second)
 		json.NewEncoder(w).Encode(msg)
 	})
 
 	fmt.Println("Server started. Visit localhost:3001")
 
 	graceful.Run(":3001", 10*time.Second, mux)
-	m.Stop()
+	t.Stop(0)
 
 	fmt.Println("Server terminated.")
 }
