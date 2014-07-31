@@ -19,7 +19,7 @@ type Direct struct {
 	handlers map[string]qp.Handler
 	lock     sync.Mutex
 	shutdown chan qp.Signal
-	logger   qp.Logger
+	log      qp.Logger
 }
 
 // ensure the interface is satisfied
@@ -51,14 +51,14 @@ func NewDirectTimeout(url string, connectTimeout, readTimeout, writeTimeout time
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
 		stopChan: stop.Make(),
-		logger:   qp.NilLogger,
+		log:      qp.NilLogger,
 	}
 	return p
 }
 
-// SetLogger sets the logger to log to.
-func (d *Direct) SetLogger(logger qp.Logger) {
-	d.logger = logger
+// SetLogger sets the Logger to log to.
+func (d *Direct) SetLogger(log qp.Logger) {
+	d.log = log
 }
 
 // Send sends data on the channel.
@@ -94,7 +94,7 @@ func (d *Direct) processMessages() {
 					default:
 						conn := d.pool.Get()
 						if err := d.handleMessage(conn, channel, handler); err != nil {
-							d.logger.Error("Failed to handle message:", err)
+							d.log.Error("Failed to handle message:", err)
 						}
 						conn.Close()
 					}
