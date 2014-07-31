@@ -14,18 +14,21 @@ import (
 func TestLogger(t *testing.T) {
 
 	var buf bytes.Buffer
-	logger := log.New(&buf, "test: ", log.Lshortfile)
+	logger := log.New(&buf, "test: ", log.Llongfile|log.Ldate|log.Lmicroseconds)
 
 	var l qp.Logger
 	l = qp.LogLogger(logger)
 
 	l.Error("o", "n", "e")
 	l.Errorf("t%s", "wo")
+	l.Errorf("%s", "three")
 
 	require.Contains(t, buf.String(), "one")
-	require.Contains(t, buf.String(), "one")
+	require.Contains(t, buf.String(), "two")
+	require.Contains(t, buf.String(), "three")
 	require.Contains(t, buf.String(), "logger_test.go")
-	require.Equal(t, 3, len(strings.Split(buf.String(), "\n")))
+	require.Equal(t, 4, len(strings.Split(buf.String(), "\n")))
+
 }
 
 type logger struct {
