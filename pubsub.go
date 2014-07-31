@@ -3,7 +3,7 @@ package qp
 // Event defines all the fields and information
 // included as part of a Event to a request.
 type Event struct {
-	// From is the address of the sender.
+	// From is the instance ID of the sender.
 	From string `json:"from"`
 	// Data is the payload of the event.
 	Data interface{} `json:"data"`

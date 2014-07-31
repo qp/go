@@ -7,7 +7,7 @@
 //
 // Publish and Subscribe
 //
-// The pubsub model is achieved by using the Publisher and
+// The pub/sub model is achieved by using the Publisher and
 // Subscriber types, which expose Publish and Subscribe methods
 // respectively.
 //
