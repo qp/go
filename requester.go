@@ -3,6 +3,7 @@ package qp
 import (
 	"log"
 	"sync"
+	"time"
 )
 
 // errResolving represents failure to resolve requests.
@@ -116,18 +117,30 @@ func newFuture(id RequestID) *Future {
 // Response uses a future mechanism to retrieve the response.
 // Execution continues asynchronously until this method is called,
 // at which point execution blocks until the Response object is
-// available.
-//
-// There is no timeout. It will block indefinitely. This may
-// change in the future.
-func (r *Future) Response() *Response {
+// available, or if the timeout is reached.
+// If the Response times out, nil is returned.
+func (r *Future) Response(timeout time.Duration) *Response {
 	select {
-	case <-r.fetched:
+	case <-r.fetched: // response already here
 		return r.cached
-	case r.cached = <-r.response:
+	case r.cached = <-r.response: // response arrived
 		close(r.fetched)
 		return r.cached
+	case <-time.After(timeout):
+		// timed out
+		return nil
 	}
+}
+
+// Response defines all the fields and information
+// included as part of a response to a request.
+type Response struct {
+	// From is an array of addresses encountered thus far
+	From []string `json:"from"`
+	// ID is the ID of the request to which this response relates
+	ID RequestID `json:"id"`
+	// Data is the repsonse data payload
+	Data interface{} `json:"data"`
 }
 
 // RequestResolver is responsible for tracking futures
@@ -164,15 +177,4 @@ func (c *reqResolver) Resolve(response *Response) error {
 	}
 	future.response <- response
 	return nil
-}
-
-// Response defines all the fields and information
-// included as part of a response to a request.
-type Response struct {
-	// From is an array of addresses encountered thus far
-	From []string `json:"from"`
-	// ID is the ID of the request to which this response relates
-	ID RequestID `json:"id"`
-	// Data is the repsonse data payload
-	Data interface{} `json:"data"`
 }

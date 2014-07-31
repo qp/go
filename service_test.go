@@ -2,6 +2,7 @@ package qp_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/pat/stop"
 
@@ -27,9 +28,9 @@ func TestServiceHandler(t *testing.T) {
 	requester := qp.NewRequester("requester", "one", qp.JSON, d)
 	f, err := requester.Issue([]string{"name"}, "test")
 	require.NoError(t, err)
-	require.Equal(t, "hit", f.Response().Data)
-	require.Equal(t, "requester.one", f.Response().From[0])
-	require.Equal(t, "name.instance", f.Response().From[1])
+	require.Equal(t, "hit", f.Response(1*time.Second).Data)
+	require.Equal(t, "requester.one", f.Response(1 * time.Second).From[0])
+	require.Equal(t, "name.instance", f.Response(1 * time.Second).From[1])
 }
 
 func TestServiceMultiple(t *testing.T) {
@@ -57,12 +58,14 @@ func TestServiceMultiple(t *testing.T) {
 	requester := qp.NewRequester("requester", "one", qp.JSON, d)
 	f, err := requester.Issue([]string{"name", "name2", "name3"}, []string{"origin"})
 	require.NoError(t, err)
-	require.Equal(t, "origin", f.Response().Data.([]interface{})[0])
-	require.Equal(t, "first", f.Response().Data.([]interface{})[1])
-	require.Equal(t, "second", f.Response().Data.([]interface{})[2])
-	require.Equal(t, "third", f.Response().Data.([]interface{})[3])
-	require.Equal(t, "requester.one", f.Response().From[0])
-	require.Equal(t, "name.instance", f.Response().From[1])
-	require.Equal(t, "name2.instance", f.Response().From[2])
-	require.Equal(t, "name3.instance", f.Response().From[3])
+	r := f.Response(1 * time.Second)
+	require.Equal(t, "origin", r.Data.([]interface{})[0])
+	require.Equal(t, "first", r.Data.([]interface{})[1])
+	require.Equal(t, "second", r.Data.([]interface{})[2])
+	require.Equal(t, "third", r.Data.([]interface{})[3])
+	require.Equal(t, "requester.one", r.From[0])
+	require.Equal(t, "name.instance", r.From[1])
+	require.Equal(t, "name2.instance", r.From[2])
+	require.Equal(t, "name3.instance", r.From[3])
+
 }
