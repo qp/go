@@ -97,7 +97,7 @@ func (s *subscriber) Subscribe(channel string, handler EventHandler) error {
 
 		var event Event
 		if err := s.codec.Unmarshal(msg.Data, &event); err != nil {
-			s.log.Error("TODO: Handle unmsrshal error in Subscribe:", err)
+			s.log.Error("Unmarshal error in Subscribe:", err)
 			return
 		}
 

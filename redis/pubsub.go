@@ -107,7 +107,7 @@ func (p *PubSub) processMessages() {
 									continue
 								}
 							}
-							p.log.Error("Error when receiving from Redis:", v)
+							p.log.Error("redis.pubsub: error when receiving from Redis:", v)
 						}
 					}
 				}

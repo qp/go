@@ -94,7 +94,7 @@ func (d *Direct) processMessages() {
 					default:
 						conn := d.pool.Get()
 						if err := d.handleMessage(conn, channel, handler); err != nil {
-							d.log.Error("Failed to handle message:", err)
+							d.log.Error("redis.direct: failed to handle message:", err)
 						}
 						conn.Close()
 					}
