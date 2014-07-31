@@ -29,7 +29,6 @@ func TestDirect(t *testing.T) {
 	})))
 
 	require.NoError(t, d.Start())
-
 	require.NoError(t, d.Send("channel", data))
 
 	select {

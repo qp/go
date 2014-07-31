@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"log"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -20,6 +19,7 @@ type PubSub struct {
 	running  uint32
 	shutdown chan qp.Signal
 	stopChan chan stop.Signal
+	logger   qp.Logger
 }
 
 // ensure the interface is satisfied
@@ -51,8 +51,14 @@ func NewPubSubTimeout(url string, connectTimeout, readTimeout, writeTimeout time
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
 		stopChan: stop.Make(),
+		logger:   qp.NilLogger,
 	}
 	return p
+}
+
+// SetLogger sets the logger to log to.
+func (p *PubSub) SetLogger(logger qp.Logger) {
+	p.logger = logger
 }
 
 // Publish publishes data on the specified channel.
@@ -101,7 +107,7 @@ func (p *PubSub) processMessages() {
 									continue
 								}
 							}
-							log.Println("TODO: handle this error properly:", v)
+							p.logger.Error("Error when receiving from Redis:", v)
 						}
 					}
 				}

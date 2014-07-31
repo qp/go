@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +17,10 @@ func main() {
 
 	// create our service
 	t := redis.NewDirect("127.0.0.1:6379")
+
+	// setup logger to Stdout
+	t.SetLogger(qp.LogLogger(log.New(os.Stdout, "first: ", log.Lshortfile)))
+
 	qp.Service("first", "one", qp.JSON, t,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			d, _ := json.Marshal(r)

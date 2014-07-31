@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"log"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -20,6 +19,7 @@ type Direct struct {
 	handlers map[string]qp.Handler
 	lock     sync.Mutex
 	shutdown chan qp.Signal
+	logger   qp.Logger
 }
 
 // ensure the interface is satisfied
@@ -51,8 +51,14 @@ func NewDirectTimeout(url string, connectTimeout, readTimeout, writeTimeout time
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
 		stopChan: stop.Make(),
+		logger:   qp.NilLogger,
 	}
 	return p
+}
+
+// SetLogger sets the logger to log to.
+func (d *Direct) SetLogger(logger qp.Logger) {
+	d.logger = logger
 }
 
 // Send sends data on the channel.
@@ -88,7 +94,7 @@ func (d *Direct) processMessages() {
 					default:
 						conn := d.pool.Get()
 						if err := d.handleMessage(conn, channel, handler); err != nil {
-							log.Println("TODO: handle this error properly:", err)
+							d.logger.Error("Failed to handle message:", err)
 						}
 						conn.Close()
 					}
