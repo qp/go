@@ -31,7 +31,7 @@ func main() {
 			fmt.Fprintf(w, "error issuing request: %v\n", err)
 		}
 
-		msg := f.Response()
+		msg := f.Response(1 * time.Second)
 		json.NewEncoder(w).Encode(msg)
 	})
 
