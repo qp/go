@@ -1,6 +1,7 @@
 package qp
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
@@ -12,8 +13,11 @@ type errResolving struct {
 
 // Error gets a string that describes this error.
 func (e errResolving) Error() string {
-	return "qp: Failed to resolve response " + string(e.ID)
+	return "failed to resolve response " + string(e.ID)
 }
+
+// ErrTimeout represents situations when timeouts have occurred.
+var ErrTimeout = errors.New("timed out")
 
 // Request defines all the fields and information
 // in the standard qp request object. It is used
@@ -126,16 +130,16 @@ func newFuture(id RequestID) *Future {
 // at which point execution blocks until the Response object is
 // available, or if the timeout is reached.
 // If the Response times out, nil is returned.
-func (r *Future) Response(timeout time.Duration) *Response {
+func (r *Future) Response(timeout time.Duration) (*Response, error) {
 	select {
 	case <-r.fetched: // response already here
-		return r.cached
+		return r.cached, nil
 	case r.cached = <-r.response: // response arrived
 		close(r.fetched)
-		return r.cached
+		return r.cached, nil
 	case <-time.After(timeout):
 		// timed out
-		return nil
+		return nil, ErrTimeout
 	}
 }
 

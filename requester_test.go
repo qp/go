@@ -42,8 +42,9 @@ func TestRequester(t *testing.T) {
 	responseMsg := &qp.Message{Source: "", Data: json(testResponse)}
 	tp.OnMessages["name.instance"].Handle(responseMsg)
 
-	response := future.Response(1 * time.Second)
+	response, err := future.Response(1 * time.Second)
 	require.Equal(t, testResponse, response)
+	require.NoError(t, err)
 
 }
 
@@ -75,7 +76,8 @@ func TestRequesterResponseTimeout(t *testing.T) {
 	require.Equal(t, req.Data, testData)
 
 	// do not send response - force timeout
-	response := future.Response(1 * time.Millisecond)
-
+	response, err := future.Response(1 * time.Millisecond)
 	require.Nil(t, response)
+	require.Equal(t, qp.ErrTimeout, err)
+
 }

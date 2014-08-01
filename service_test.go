@@ -29,9 +29,10 @@ func TestServiceHandler(t *testing.T) {
 	requester := qp.NewRequester("requester", "one", qp.JSON, d)
 	f, err := requester.Issue([]string{"name"}, "test")
 	require.NoError(t, err)
-	require.Equal(t, "hit", f.Response(1*time.Second).Data)
-	require.Equal(t, "requester.one", f.Response(1 * time.Second).From[0])
-	require.Equal(t, "name.instance", f.Response(1 * time.Second).From[1])
+	res, _ := f.Response(1 * time.Second)
+	require.Equal(t, "hit", res.Data)
+	require.Equal(t, "requester.one", res.From[0])
+	require.Equal(t, "name.instance", res.From[1])
 }
 
 func TestServiceMultiple(t *testing.T) {
@@ -59,7 +60,9 @@ func TestServiceMultiple(t *testing.T) {
 	requester := qp.NewRequester("requester", "one", qp.JSON, d)
 	f, err := requester.Issue([]string{"name", "name2", "name3"}, []string{"origin"})
 	require.NoError(t, err)
-	r := f.Response(1 * time.Second)
+	r, err := f.Response(1 * time.Second)
+
+	require.NoError(t, err)
 	require.Equal(t, "origin", r.Data.([]interface{})[0])
 	require.Equal(t, "first", r.Data.([]interface{})[1])
 	require.Equal(t, "second", r.Data.([]interface{})[2])
