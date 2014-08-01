@@ -15,21 +15,27 @@ type Codec interface {
 	Unmarshal(data []byte, to interface{}) error
 }
 
-// jsonCodec is a Codec that talks JSON.
-type jsonCodec struct{}
+type codec struct {
+	marshal   func(object interface{}) ([]byte, error)
+	unmarshal func(data []byte, to interface{}) error
+}
 
-// ensure jsonCodec is a Codec
-var _ Codec = (*jsonCodec)(nil)
+func (c *codec) Marshal(object interface{}) ([]byte, error) {
+	return c.marshal(object)
+}
+func (c *codec) Unmarshal(data []byte, to interface{}) error {
+	return c.unmarshal(data, to)
+}
+
+// NewCodec makes a new Codec with the specified marshal and
+// unmarshal functions.
+func NewCodec(marshal func(object interface{}) ([]byte, error), unmarshal func(data []byte, to interface{}) error) Codec {
+	return &codec{marshal: marshal, unmarshal: unmarshal}
+}
 
 // JSON is a Codec that talks JSON.
-var JSON *jsonCodec
-
-// Marshal an object into a JSON byte slice representation
-func (_ *jsonCodec) Marshal(object interface{}) ([]byte, error) {
+var JSON = NewCodec(func(object interface{}) ([]byte, error) {
 	return json.Marshal(object)
-}
-
-// Unmarshal an object from a JSON byte slice into an object
-func (_ *jsonCodec) Unmarshal(data []byte, to interface{}) error {
+}, func(data []byte, to interface{}) error {
 	return json.Unmarshal(data, to)
-}
+})
