@@ -3,7 +3,7 @@ package bson_test
 import (
 	"testing"
 
-	"github.com/qp/go/mgo/bson"
+	"github.com/qp/go/codecs/mgo/bson"
 	"github.com/stretchr/testify/require"
 	mgobson "labix.org/v2/mgo/bson"
 )
