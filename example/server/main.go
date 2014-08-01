@@ -29,9 +29,14 @@ func main() {
 		f, err := r.Issue([]string{"first", "second", "third"}, obj)
 		if err != nil {
 			fmt.Fprintf(w, "error issuing request: %v\n", err)
+			return
 		}
 
-		msg := f.Response(1 * time.Second)
+		msg, err := f.Response(1 * time.Second)
+		if err != nil {
+			fmt.Fprintf(w, "error getting response: %v\n", err)
+			return
+		}
 		json.NewEncoder(w).Encode(msg)
 	})
 
