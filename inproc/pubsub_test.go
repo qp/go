@@ -15,7 +15,9 @@ import (
 func TestPubSub(t *testing.T) {
 
 	ps := inproc.NewPubSub()
+	ps.Start()
 	ps2 := inproc.NewPubSub()
+	ps2.Start()
 	require.NotNil(t, ps)
 	require.NotNil(t, ps2)
 

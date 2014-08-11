@@ -13,6 +13,7 @@ type Direct struct {
 	lock     sync.RWMutex
 	handlers map[string]qp.Handler
 	stopChan chan stop.Signal
+	Logger   qp.Logger
 }
 
 // ensure the interface is satisfied
@@ -26,7 +27,7 @@ var directLock sync.RWMutex
 func NewDirect() *Direct {
 	p := &Direct{
 		handlers: make(map[string]qp.Handler),
-		stopChan: stop.Make(),
+		Logger:   qp.NilLogger,
 	}
 	directLock.Lock()
 	directInstances[p] = exists
@@ -65,6 +66,7 @@ func init() {
 // Send sends a message to the given chanenl
 func (p *Direct) Send(channel string, data []byte) error {
 	m := &qp.Message{Source: channel, Data: data}
+	p.Logger.Infof("send %v", m)
 	directQueue <- m
 	return nil
 }
@@ -74,16 +76,20 @@ func (p *Direct) OnMessage(channel string, handler qp.Handler) error {
 	p.lock.Lock()
 	p.handlers[channel] = handler
 	p.lock.Unlock()
+	p.Logger.Info("OnMessage ", channel)
 	return nil
 }
 
 // Start starts the transport.
 func (p *Direct) Start() error {
+	p.stopChan = stop.Make()
+	p.Logger.Info("start inproc direct")
 	return nil
 }
 
 // Stop stops the transport and closes StopChan() when finished.
 func (p *Direct) Stop(time.Duration) {
+	p.Logger.Info("stop inproc direct")
 	directLock.Lock()
 	delete(directInstances, p)
 	directLock.Unlock()

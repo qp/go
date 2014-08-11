@@ -10,6 +10,7 @@ import (
 func TestDirectStopping(t *testing.T) {
 
 	d := NewDirect()
+	d.Start()
 	require.NotNil(t, d)
 
 	require.NotNil(t, directInstances[d])

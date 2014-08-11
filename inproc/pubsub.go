@@ -15,6 +15,7 @@ type PubSub struct {
 	lock     sync.RWMutex
 	handlers map[string]qp.Handler
 	stopChan chan stop.Signal
+	Logger   qp.Logger
 }
 
 // ensure the interface is satisfied
@@ -28,7 +29,7 @@ var pubSubLock sync.RWMutex
 func NewPubSub() *PubSub {
 	p := &PubSub{
 		handlers: make(map[string]qp.Handler),
-		stopChan: stop.Make(),
+		Logger:   qp.NilLogger,
 	}
 	pubSubLock.Lock()
 	pubSubInstances[p] = exists
@@ -65,6 +66,7 @@ func init() {
 // Publish publishes data on the specified channel.
 func (p *PubSub) Publish(channel string, data []byte) error {
 	m := &qp.Message{Source: channel, Data: data}
+	p.Logger.Infof("publish %v", m)
 	pubSubQueue <- m
 	return nil
 }
@@ -74,16 +76,20 @@ func (p *PubSub) Subscribe(channel string, handler qp.Handler) error {
 	p.lock.Lock()
 	p.handlers[channel] = handler
 	p.lock.Unlock()
+	p.Logger.Info("subscribed to ", channel)
 	return nil
 }
 
 // Start starts the transport.
 func (p *PubSub) Start() error {
+	p.stopChan = stop.Make()
+	p.Logger.Info("start inproc pubsub")
 	return nil
 }
 
 // Stop stops the transport and closes StopChan() when finished.
 func (p *PubSub) Stop(time.Duration) {
+	p.Logger.Info("stop inproc pubsub")
 	pubSubLock.Lock()
 	delete(pubSubInstances, p)
 	pubSubLock.Unlock()

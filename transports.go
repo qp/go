@@ -2,6 +2,7 @@ package qp
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/stretchr/pat/start"
 )
@@ -20,6 +21,10 @@ type Message struct {
 	Source string
 	// The data of the message.
 	Data []byte
+}
+
+func (m *Message) String() string {
+	return fmt.Sprintf("[%s %v]", m.Source, string(m.Data))
 }
 
 // Handler represents types capable of handling messages

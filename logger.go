@@ -9,12 +9,16 @@ import (
 type Logger interface {
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
 }
 
 type nilLogger struct{}
 
 func (n *nilLogger) Error(...interface{})          {}
 func (n *nilLogger) Errorf(string, ...interface{}) {}
+func (n *nilLogger) Info(...interface{})           {}
+func (n *nilLogger) Infof(string, ...interface{})  {}
 
 // NilLogger represents a Logger the calls to which are
 // disregarded.
@@ -42,6 +46,14 @@ func (ls loggers) Error(args ...interface{}) {
 func (ls loggers) Errorf(format string, args ...interface{}) {
 	ls.Error(fmt.Sprintf(format, args...))
 }
+func (ls loggers) Info(args ...interface{}) {
+	for _, l := range ls {
+		l.Info(args...)
+	}
+}
+func (ls loggers) Infof(format string, args ...interface{}) {
+	ls.Infof(fmt.Sprintf(format, args...))
+}
 
 type loglogger struct {
 	logger *log.Logger
@@ -54,6 +66,12 @@ func (l *loglogger) Error(args ...interface{}) {
 	l.output(fmt.Sprint(args...))
 }
 func (l *loglogger) Errorf(format string, args ...interface{}) {
+	l.output(fmt.Sprintf(format, args...))
+}
+func (l *loglogger) Info(args ...interface{}) {
+	l.output(fmt.Sprint(args...))
+}
+func (l *loglogger) Infof(format string, args ...interface{}) {
 	l.output(fmt.Sprintf(format, args...))
 }
 

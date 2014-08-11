@@ -10,6 +10,7 @@ import (
 func TestPubSubStopping(t *testing.T) {
 
 	ps := NewPubSub()
+	ps.Start()
 	require.NotNil(t, ps)
 
 	require.NotNil(t, pubSubInstances[ps])

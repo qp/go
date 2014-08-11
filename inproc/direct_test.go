@@ -13,6 +13,7 @@ import (
 func TestDirect(t *testing.T) {
 
 	d := inproc.NewDirect()
+	d.Start()
 	defer func() {
 		d.Stop(stop.NoWait)
 		<-d.StopChan()

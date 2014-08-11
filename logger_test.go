@@ -41,6 +41,12 @@ func (l *logger) Error(v ...interface{}) {
 func (l *logger) Errorf(format string, v ...interface{}) {
 	l.output = append(l.output, fmt.Sprintf(format, v...))
 }
+func (l *logger) Info(v ...interface{}) {
+	l.output = append(l.output, fmt.Sprint(v...))
+}
+func (l *logger) Infof(format string, v ...interface{}) {
+	l.output = append(l.output, fmt.Sprintf(format, v...))
+}
 
 var _ qp.Logger = (*logger)(nil)
 
