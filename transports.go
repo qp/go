@@ -1,6 +1,10 @@
 package qp
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/stretchr/pat/start"
+)
 
 // ErrNotRunning is returned when an method is
 // called on a transport that is not running.
@@ -36,7 +40,7 @@ func (f HandlerFunc) Handle(msg *Message) {
 // PubSubTransport represents a transport capable of
 // providing publish/subscribe capabilities.
 type PubSubTransport interface {
-	StartStopper
+	start.StartStopper
 	// Publish publishes data on the specified channel.
 	Publish(channel string, data []byte) error
 	// Subscribe binds the handler to the specified channel.
@@ -48,7 +52,7 @@ type PubSubTransport interface {
 // DirectTransport represents a transport capable of
 // providing request/response capabilities.
 type DirectTransport interface {
-	StartStopper
+	start.StartStopper
 	// Send sends data on the channel.
 	Send(channel string, data []byte) error
 	// OnMessage binds the handler to the specified channel.
