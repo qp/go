@@ -144,11 +144,15 @@ func (p *PubSub) Start() error {
 
 // Stop stops the transport and closes StopChan() when finished.
 func (p *PubSub) Stop(grace time.Duration) {
+	if p.shutdown == nil {
+		return
+	}
 	p.log.Info("stopping...")
 	// stop processing new Publish calls
 	atomic.StoreUint32(&p.running, 0)
 	// instruct all listening goroutines to shutdown
 	close(p.shutdown)
+	p.shutdown = nil
 	// wait for duration to allow in-flight requests to finish
 	time.Sleep(grace)
 	// inform caller of stop complete
