@@ -66,9 +66,13 @@ func (p *PubSub) Publish(channel string, data []byte) error {
 	if atomic.LoadUint32(&p.running) == 0 {
 		return qp.ErrNotRunning
 	}
+	p.log.Info("publish to", channel, string(data))
 	conn := p.pool.Get()
 	_, err := conn.Do("PUBLISH", channel, data)
 	conn.Close()
+	if err != nil {
+		p.log.Error("publish failed", err)
+	}
 	return err
 }
 
@@ -77,6 +81,7 @@ func (p *PubSub) Subscribe(channel string, handler qp.Handler) error {
 	if atomic.LoadUint32(&p.running) == 1 {
 		return qp.ErrRunning
 	}
+	p.log.Info("subscribing to", channel)
 	p.lock.Lock()
 	p.handlers[channel] = handler
 	p.lock.Unlock()
@@ -93,17 +98,20 @@ func (p *PubSub) processMessages() {
 				for {
 					select {
 					case <-p.shutdown:
+						p.log.Info("shutting down")
 						psc.PUnsubscribe(channel)
 						conn.Close()
 						return
 					default:
 						switch v := psc.Receive().(type) {
 						case redis.PMessage:
+							p.log.Info("handling message from", v.Channel, v.Data)
 							go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
 						case error:
 							// Network timeout is fine also.
 							if netErr, ok := v.(net.Error); ok {
 								if netErr.Timeout() {
+									p.log.Info("network timeout, refreshing.")
 									continue
 								}
 							}
@@ -122,6 +130,7 @@ func (p *PubSub) Start() error {
 	// acks are received?
 	if atomic.LoadUint32(&p.running) == 0 {
 		atomic.StoreUint32(&p.running, 1)
+		p.log.Info("starting")
 		p.processMessages()
 	} else {
 		return qp.ErrRunning
@@ -131,6 +140,7 @@ func (p *PubSub) Start() error {
 
 // Stop stops the transport and closes StopChan() when finished.
 func (p *PubSub) Stop(grace time.Duration) {
+	p.log.Info("stopping...")
 	// stop processing new Publish calls
 	atomic.StoreUint32(&p.running, 0)
 	// wait for duration to allow in-flight requests to finish
@@ -139,6 +149,7 @@ func (p *PubSub) Stop(grace time.Duration) {
 	close(p.shutdown)
 	// inform caller of stop complete
 	close(p.stopChan)
+	p.log.Info("stopped")
 }
 
 // StopChan gets the stop channel which will be closed when

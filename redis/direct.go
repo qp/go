@@ -66,9 +66,13 @@ func (d *Direct) Send(channel string, data []byte) error {
 	if atomic.LoadUint32(&d.running) == 0 {
 		return qp.ErrNotRunning
 	}
+	d.log.Info("sending to", channel, string(data))
 	conn := d.pool.Get()
 	_, err := conn.Do("LPUSH", channel, data)
 	conn.Close()
+	if err != nil {
+		d.log.Error("LPUSH failed", err)
+	}
 	return err
 }
 
@@ -77,6 +81,7 @@ func (d *Direct) OnMessage(channel string, handler qp.Handler) error {
 	if atomic.LoadUint32(&d.running) == 1 {
 		return qp.ErrRunning
 	}
+	d.log.Info("listening to", channel)
 	d.lock.Lock()
 	d.handlers[channel] = handler
 	d.lock.Unlock()
@@ -90,6 +95,7 @@ func (d *Direct) processMessages() {
 				for {
 					select {
 					case <-d.shutdown:
+						d.log.Info("shutting down")
 						return
 					default:
 						conn := d.pool.Get()
@@ -124,6 +130,7 @@ func (d *Direct) handleMessage(conn redis.Conn, channel string, handler qp.Handl
 	if _, err := redis.Scan(message, &channel, &data); err != nil {
 		return err
 	}
+	d.log.Info("handling message on ", channel, data)
 	go handler.Handle(&qp.Message{Source: channel, Data: data})
 	return nil
 }
@@ -132,6 +139,7 @@ func (d *Direct) handleMessage(conn redis.Conn, channel string, handler qp.Handl
 func (d *Direct) Start() error {
 	if atomic.LoadUint32(&d.running) == 0 {
 		atomic.StoreUint32(&d.running, 1)
+		d.log.Info("starting")
 		go d.processMessages()
 	} else {
 		return qp.ErrRunning
@@ -145,6 +153,7 @@ func (d *Direct) Start() error {
 // In-flight requests will have "wait" duration to complete
 // before being abandoned.
 func (d *Direct) Stop(grace time.Duration) {
+	d.log.Info("stopping...")
 	// stop processing new Sends
 	atomic.StoreUint32(&d.running, 0)
 	// wait for duration to allow in-flight requests to finish
@@ -153,6 +162,7 @@ func (d *Direct) Stop(grace time.Duration) {
 	close(d.shutdown)
 	// inform caller of stop complete
 	close(d.stopChan)
+	d.log.Info("stopped")
 }
 
 // StopChan gets the stop channel which will block until
