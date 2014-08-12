@@ -78,27 +78,36 @@ func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTr
 		logger:    logger,
 	}
 	r.responseChannel = name + "." + instanceID
+
 	r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
+		r.logger.Info("received on", r.responseChannel, m)
 		var response Response
 		if err := r.codec.Unmarshal(m.Data, &response); err != nil {
 			if r.logger.Err() {
-				r.logger.Err("requester: borked response:", err)
+				r.logger.Err("borked response:", err)
 			}
 			return
 		}
 		go func() {
 			if err := r.resolver.Resolve(&response); err != nil {
 				if r.logger.Err() {
-					r.logger.Err("requester: failed to resolve:", err)
+					r.logger.Err("failed to resolve:", err)
 				}
 			}
 		}()
 	}))
+	if r.logger.Info() {
+		r.logger.Info("listening on", r.responseChannel)
+	}
 
 	return r
 }
 
 func (r *requester) Issue(pipeline []string, obj interface{}) (*Future, error) {
+
+	if r.logger.Info() {
+		r.logger.Info("issuing", pipeline, obj)
+	}
 
 	request := newRequest(r.responseChannel, obj, pipeline[1:])
 	to := pipeline[0]
