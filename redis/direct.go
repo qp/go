@@ -108,7 +108,14 @@ func (d *Direct) processMessages() {
 						conn := d.pool.Get()
 						if err := d.handleMessage(conn, channel, handler); err != nil {
 							if d.log.Err() {
-								d.log.Err("redis.direct: failed to handle message:", err)
+								// TODO: decide what's meant to happen at this point -
+								// at the moment, we just get millions of error reports.
+								// To recreate:
+								// 1. start redis
+								// 2. run a service (or other direct transporter thing)
+								// 3. stop redis
+								// 4. watch logs
+								d.log.Err("failed to handle message:", err)
 							}
 						}
 						conn.Close()

@@ -116,19 +116,29 @@ func (p *PubSub) processMessages() {
 								p.log.Info("handling message from", v.Channel, v.Data)
 							}
 							go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
-						case error:
+						case net.Error:
 							// Network timeout is fine also.
-							if netErr, ok := v.(net.Error); ok {
-								if netErr.Timeout() {
-									if p.log.Info() {
-										p.log.Info("network timeout, refreshing.")
-									}
-									continue
+							if v.(net.Error).Timeout() {
+								if p.log.Info() {
+									p.log.Info("network timeout, refreshing.")
 								}
+								continue
 							}
-							if p.log.Err() {
-								p.log.Err("redis.pubsub: error when receiving from Redis:", v)
+							if p.log.Warn() {
+								p.log.Warn("error when receiving from Redis:", v)
 							}
+						case error:
+							if p.log.Warn() {
+								// TODO: decide what's meant to happen at this point -
+								// at the moment, we just get millions of error reports.
+								// To recreate:
+								// 1. start redis
+								// 2. run a service (or other direct transporter thing)
+								// 3. stop redis
+								// 4. watch logs
+								p.log.Warn("error when receiving from Redis:", v)
+							}
+							return
 						}
 					}
 				}
