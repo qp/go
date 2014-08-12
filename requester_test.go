@@ -14,8 +14,9 @@ func TestRequester(t *testing.T) {
 	var testChannels = []string{"one", "two", "three"}
 
 	tp := &TestDirectTransport{}
-	r := qp.NewRequester("name", "instance", qp.JSON, tp)
+	r, err := qp.NewRequester("name", "instance", qp.JSON, tp)
 	require.NotNil(t, r)
+	require.NoError(t, err)
 
 	future, err := r.Issue(testChannels, testData)
 	require.NoError(t, err)
@@ -54,8 +55,9 @@ func TestRequesterResponseTimeout(t *testing.T) {
 	var testChannels = []string{"one", "two", "three"}
 
 	tp := &TestDirectTransport{}
-	r := qp.NewRequester("name", "instance", qp.JSON, tp)
+	r, err := qp.NewRequester("name", "instance", qp.JSON, tp)
 	require.NotNil(t, r)
+	require.NoError(t, err)
 
 	future, err := r.Issue(testChannels, testData)
 	require.NoError(t, err)

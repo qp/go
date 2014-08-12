@@ -7,26 +7,26 @@ import "github.com/stretchr/slog"
 // requests to it. Multiple services with the same name
 // will automatically draw upon the same channel, creating
 // implicit load balancing.
-func Service(name, instanceID string, codec Codec, transport DirectTransport, handler RequestHandler) {
-	ServiceLogger(name, instanceID, codec, transport, slog.NilLogger, handler)
+func Service(name, instanceID string, codec Codec, transport DirectTransport, handler RequestHandler) error {
+	return ServiceLogger(name, instanceID, codec, transport, slog.NilLogger, handler)
 }
 
 // ServiceFunc creates a service with a RequestHandlerFunc rather than a
 // RequestHandler.
-func ServiceFunc(name, instanceID string, codec Codec, transport DirectTransport, handler RequestHandlerFunc) {
+func ServiceFunc(name, instanceID string, codec Codec, transport DirectTransport, handler RequestHandlerFunc) error {
 	// TODO: test this
-	Service(name, instanceID, codec, transport, handler)
+	return Service(name, instanceID, codec, transport, handler)
 }
 
 // ServiceLogger does the same thing as Service but also uses the
 // specified Logger to log to.
-func ServiceLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger, handler RequestHandler) {
-	NewResponderLogger(name, instanceID, codec, transport, logger).Handle(name, handler)
+func ServiceLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger, handler RequestHandler) error {
+	return NewResponderLogger(name, instanceID, codec, transport, logger).Handle(name, handler)
 }
 
 // ServiceLoggerFunc does the same thing ServiceLogger does but takes a
 // RequestHandlerFunc rather than a RequestHandler.
-func ServiceLoggerFunc(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger, handler RequestHandlerFunc) {
+func ServiceLoggerFunc(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger, handler RequestHandlerFunc) error {
 	// TODO: test this
-	ServiceLogger(name, instanceID, codec, transport, logger, handler)
+	return ServiceLogger(name, instanceID, codec, transport, logger, handler)
 }

@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/stretchr/pat/sleep"
+
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
 	"github.com/stretchr/pat/stop"
@@ -97,6 +99,10 @@ func (d *Direct) processMessages() {
 	go func() {
 		for c, h := range d.handlers {
 			go func(channel string, handler qp.Handler) {
+				sleeper := sleep.New()
+				sleeper.Add(1*time.Minute, 1*time.Second)
+				sleeper.Add(5*time.Minute, 10*time.Second)
+				sleeper.Add(10*time.Minute, 30*time.Second)
 				for {
 					select {
 					case <-d.shutdown:
@@ -107,15 +113,20 @@ func (d *Direct) processMessages() {
 					default:
 						conn := d.pool.Get()
 						if err := d.handleMessage(conn, channel, handler); err != nil {
-							if d.log.Err() {
-								// TODO: decide what's meant to happen at this point -
-								// at the moment, we just get millions of error reports.
-								// To recreate:
-								// 1. start redis
-								// 2. run a service (or other direct transporter thing)
-								// 3. stop redis
-								// 4. watch logs
-								d.log.Err("failed to handle message:", err)
+							if d.log.Warn() {
+								d.log.Warn("failed to handle message:", err, "sleeping for", sleeper.Duration())
+							}
+							if sleeper.Sleep() == sleep.Abort {
+								if d.log.Err() {
+									d.log.Err("aborting:", err)
+								}
+								return
+							}
+						} else {
+							if sleeper.Reset() {
+								if d.log.Warn() {
+									d.log.Warn("carrying on")
+								}
 							}
 						}
 						conn.Close()
@@ -147,7 +158,7 @@ func (d *Direct) handleMessage(conn redis.Conn, channel string, handler qp.Handl
 		return err
 	}
 	if d.log.Info() {
-		d.log.Info("handling message on", channel, string(data))
+		d.log.Info("handling message on", channel+":", string(data))
 	}
 	go handler.Handle(&qp.Message{Source: channel, Data: data})
 	return nil

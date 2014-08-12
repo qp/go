@@ -64,13 +64,13 @@ type requester struct {
 }
 
 // NewRequester makes a new object capable of making requests and handling responses.
-func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) Requester {
+func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) (Requester, error) {
 	return NewRequesterLogger(name, instanceID, codec, transport, slog.NilLogger)
 }
 
 // NewRequesterLogger makes a new object capable of making requests and handling responses
 // with logs going to the specified Logger.
-func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger) Requester {
+func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger) (Requester, error) {
 	r := &requester{
 		transport: transport,
 		codec:     codec,
@@ -79,7 +79,7 @@ func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTr
 	}
 	r.responseChannel = name + "." + instanceID
 
-	r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
+	err := r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
 		r.logger.Info("received on", r.responseChannel, m)
 		var response Response
 		if err := r.codec.Unmarshal(m.Data, &response); err != nil {
@@ -96,11 +96,17 @@ func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTr
 			}
 		}()
 	}))
+	if err != nil {
+		if r.logger.Err() {
+			r.logger.Err("OnMessage:", err)
+		}
+		return nil, err
+	}
 	if r.logger.Info() {
 		r.logger.Info("listening on", r.responseChannel)
 	}
 
-	return r
+	return r, nil
 }
 
 func (r *requester) Issue(pipeline []string, obj interface{}) (*Future, error) {

@@ -33,14 +33,11 @@ func NewPubSub(url string) *PubSub {
 
 // NewPubSubTimeout makes a new PubSub redis transport and allows you to specify timeout values.
 func NewPubSubTimeout(url string, connectTimeout, readTimeout, writeTimeout time.Duration) *PubSub {
-	if readTimeout == 0 {
-		readTimeout = 1 * time.Second
-	}
 	var pool = &redis.Pool{
 		MaxIdle:     8,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.DialTimeout("tcp", url, connectTimeout, readTimeout, writeTimeout)
+			c, err := redis.DialTimeout("tcp", url, connectTimeout, 0, writeTimeout)
 			if err != nil {
 				return nil, err
 			}
@@ -100,46 +97,30 @@ func (p *PubSub) processMessages() {
 				conn := p.pool.Get()
 				psc := redis.PubSubConn{Conn: conn}
 				psc.PSubscribe(channel)
+				closed := false
+				go func() {
+					<-p.shutdown
+					if p.log.Info() {
+						p.log.Info("received shutdown signal - shutting down")
+					}
+					closed = true
+					psc.Close()
+				}()
 				for {
-					select {
-					case <-p.shutdown:
+					switch v := psc.Receive().(type) {
+					case redis.PMessage:
 						if p.log.Info() {
-							p.log.Info("shutting down")
+							p.log.Info("handling message from", v.Channel+":", string(v.Data))
 						}
-						psc.PUnsubscribe(channel)
-						conn.Close()
-						return
-					default:
-						switch v := psc.Receive().(type) {
-						case redis.PMessage:
-							if p.log.Info() {
-								p.log.Info("handling message from", v.Channel, v.Data)
-							}
-							go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
-						case net.Error:
-							// Network timeout is fine also.
-							if v.(net.Error).Timeout() {
-								if p.log.Info() {
-									p.log.Info("network timeout, refreshing.")
-								}
-								continue
-							}
-							if p.log.Warn() {
-								p.log.Warn("error when receiving from Redis:", v)
-							}
-						case error:
-							if p.log.Warn() {
-								// TODO: decide what's meant to happen at this point -
-								// at the moment, we just get millions of error reports.
-								// To recreate:
-								// 1. start redis
-								// 2. run a service (or other direct transporter thing)
-								// 3. stop redis
-								// 4. watch logs
-								p.log.Warn("error when receiving from Redis:", v)
-							}
+						go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
+					case error, net.Error:
+						if closed {
 							return
 						}
+						if p.log.Warn() {
+							p.log.Warn("error when receiving from Redis:", v)
+						}
+						return
 					}
 				}
 			}(c, h)
@@ -166,10 +147,10 @@ func (p *PubSub) Stop(grace time.Duration) {
 	p.log.Info("stopping...")
 	// stop processing new Publish calls
 	atomic.StoreUint32(&p.running, 0)
-	// wait for duration to allow in-flight requests to finish
-	time.Sleep(grace)
 	// instruct all listening goroutines to shutdown
 	close(p.shutdown)
+	// wait for duration to allow in-flight requests to finish
+	time.Sleep(grace)
 	// inform caller of stop complete
 	close(p.stopChan)
 	p.log.Info("stopped")

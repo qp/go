@@ -21,14 +21,19 @@ func main() {
 	// setup logger to Stdout
 	t.SetLogger(slog.New("second", slog.Everything))
 
-	qp.Service("second", "one", qp.JSON, t,
+	err := qp.Service("second", "one", qp.JSON, t,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
 			d, _ := json.Marshal(r)
 			fmt.Println("Hello from second!", string(d))
 			r.Data.(map[string]interface{})["messages"] = append(r.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the second service at "+time.Now().String())
 		}))
 
-	err := t.Start()
+	if err != nil {
+		fmt.Println("error registering service", err)
+		return
+	}
+
+	err = t.Start()
 	if err != nil {
 		fmt.Println("error starting transport", err)
 	}

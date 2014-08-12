@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,7 +16,10 @@ func main() {
 
 	// create our requester
 	t := redis.NewDirect("127.0.0.1:6379")
-	r := qp.NewRequester("webserver", "one", qp.JSON, t)
+	r, err := qp.NewRequester("webserver", "one", qp.JSON, t)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	t.Start()
 
 	mux := http.NewServeMux()

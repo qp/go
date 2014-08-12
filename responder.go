@@ -53,7 +53,7 @@ func NewResponderLogger(name, instanceID string, codec Codec, transport DirectTr
 
 func (r *responder) Handle(channel string, handler RequestHandler) error {
 
-	r.transport.OnMessage(channel, HandlerFunc(func(msg *Message) {
+	return r.transport.OnMessage(channel, HandlerFunc(func(msg *Message) {
 
 		var request Request
 		if err := r.codec.Unmarshal(msg.Data, &request); err != nil {
@@ -92,7 +92,6 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 	}))
 
-	return nil
 }
 
 func (r *responder) HandleFunc(channel string, f RequestHandlerFunc) error {
