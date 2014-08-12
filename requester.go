@@ -35,6 +35,12 @@ type Request struct {
 	Data interface{} `json:"data"`
 }
 
+// Abort clears the To slice indicating that the Request should
+// be sent back to the originator.
+func (r *Request) Abort() {
+	r.To = []string{}
+}
+
 // newRequest makes a new request object and generates a unique ID in the from array.
 func newRequest(endpoint string, object interface{}, pipeline []string) *Request {
 	return &Request{To: pipeline, From: []string{endpoint}, ID: unique(), Data: object}

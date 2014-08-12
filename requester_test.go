@@ -49,6 +49,14 @@ func TestRequester(t *testing.T) {
 
 }
 
+func TestAbort(t *testing.T) {
+
+	r := qp.Request{To: []string{"one", "two", "three"}}
+	r.Abort()
+	require.Equal(t, 0, len(r.To))
+
+}
+
 func TestRequesterResponseTimeout(t *testing.T) {
 
 	var testData = map[string]interface{}{"key": "value"}
