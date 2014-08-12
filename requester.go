@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/stretchr/slog"
 )
 
 // errResolving represents failure to resolve requests.
@@ -58,17 +60,17 @@ type requester struct {
 	transport       DirectTransport
 	responseChannel string
 	resolver        *reqResolver
-	logger          Logger
+	logger          slog.Logger
 }
 
 // NewRequester makes a new object capable of making requests and handling responses.
 func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) Requester {
-	return NewRequesterLogger(name, instanceID, codec, transport, NilLogger)
+	return NewRequesterLogger(name, instanceID, codec, transport, slog.NilLogger)
 }
 
 // NewRequesterLogger makes a new object capable of making requests and handling responses
 // with logs going to the specified Logger.
-func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger Logger) Requester {
+func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger) Requester {
 	r := &requester{
 		transport: transport,
 		codec:     codec,
@@ -79,12 +81,16 @@ func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTr
 	r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
 		var response Response
 		if err := r.codec.Unmarshal(m.Data, &response); err != nil {
-			r.logger.Error("requester: borked response:", err)
+			if r.logger.Err() {
+				r.logger.Err("requester: borked response:", err)
+			}
 			return
 		}
 		go func() {
 			if err := r.resolver.Resolve(&response); err != nil {
-				r.logger.Error("requester: failed to resolve:", err)
+				if r.logger.Err() {
+					r.logger.Err("requester: failed to resolve:", err)
+				}
 			}
 		}()
 	}))

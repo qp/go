@@ -1,5 +1,7 @@
 package qp
 
+import "github.com/stretchr/slog"
+
 // RequestHandler represents types capable of handling Requests.
 type RequestHandler interface {
 	Handle(r *Request)
@@ -30,17 +32,17 @@ type responder struct {
 	uniqueID   string
 	codec      Codec
 	transport  DirectTransport
-	log        Logger
+	log        slog.Logger
 }
 
 // NewResponder makes a new object capable of responding to requests.
 func NewResponder(name, instanceID string, codec Codec, transport DirectTransport) Responder {
-	return NewResponderLogger(name, instanceID, codec, transport, NilLogger)
+	return NewResponderLogger(name, instanceID, codec, transport, slog.NilLogger)
 }
 
 // NewResponderLogger makes a new object capable of responding to requests, which
 // will log errors to the specified Logger.
-func NewResponderLogger(name, instanceID string, codec Codec, transport DirectTransport, logger Logger) Responder {
+func NewResponderLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger) Responder {
 	return &responder{
 		codec:     codec,
 		transport: transport,
@@ -55,7 +57,9 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 		var request Request
 		if err := r.codec.Unmarshal(msg.Data, &request); err != nil {
-			r.log.Error("responder: unmarshal error:", err)
+			if r.log.Err() {
+				r.log.Err("responder: unmarshal error:", err)
+			}
 			return
 		}
 
@@ -77,7 +81,9 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 		// encode the data
 		data, err := r.codec.Marshal(request)
 		if err != nil {
-			r.log.Error("responder: error encoding data for pipeline:", err.Error())
+			if r.log.Err() {
+				r.log.Err("responder: error encoding data for pipeline:", err)
+			}
 			return
 		}
 

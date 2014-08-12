@@ -9,6 +9,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
 	"github.com/stretchr/pat/stop"
+	"github.com/stretchr/slog"
 )
 
 // Direct represents a qp.DirectTransport.
@@ -19,7 +20,7 @@ type Direct struct {
 	handlers map[string]qp.Handler
 	lock     sync.Mutex
 	shutdown chan qp.Signal
-	log      qp.Logger
+	log      slog.Logger
 }
 
 // ensure the interface is satisfied
@@ -51,13 +52,13 @@ func NewDirectTimeout(url string, connectTimeout, readTimeout, writeTimeout time
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
 		stopChan: stop.Make(),
-		log:      qp.NilLogger,
+		log:      slog.NilLogger,
 	}
 	return p
 }
 
 // SetLogger sets the Logger to log to.
-func (d *Direct) SetLogger(log qp.Logger) {
+func (d *Direct) SetLogger(log slog.Logger) {
 	d.log = log
 }
 
@@ -70,8 +71,8 @@ func (d *Direct) Send(channel string, data []byte) error {
 	conn := d.pool.Get()
 	_, err := conn.Do("LPUSH", channel, data)
 	conn.Close()
-	if err != nil {
-		d.log.Error("LPUSH failed", err)
+	if err != nil && d.log.Err() {
+		d.log.Err("LPUSH failed", err)
 	}
 	return err
 }
@@ -100,7 +101,9 @@ func (d *Direct) processMessages() {
 					default:
 						conn := d.pool.Get()
 						if err := d.handleMessage(conn, channel, handler); err != nil {
-							d.log.Error("redis.direct: failed to handle message:", err)
+							if d.log.Err() {
+								d.log.Err("redis.direct: failed to handle message:", err)
+							}
 						}
 						conn.Close()
 					}

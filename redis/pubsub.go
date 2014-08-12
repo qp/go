@@ -9,6 +9,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
 	"github.com/stretchr/pat/stop"
+	"github.com/stretchr/slog"
 )
 
 // PubSub represents a qp.PubSubTransport.
@@ -19,7 +20,7 @@ type PubSub struct {
 	running  uint32
 	shutdown chan qp.Signal
 	stopChan chan stop.Signal
-	log      qp.Logger
+	log      slog.Logger
 }
 
 // ensure the interface is satisfied
@@ -51,13 +52,13 @@ func NewPubSubTimeout(url string, connectTimeout, readTimeout, writeTimeout time
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
 		stopChan: stop.Make(),
-		log:      qp.NilLogger,
+		log:      slog.NilLogger,
 	}
 	return p
 }
 
 // SetLogger sets the Logger to log to.
-func (p *PubSub) SetLogger(log qp.Logger) {
+func (p *PubSub) SetLogger(log slog.Logger) {
 	p.log = log
 }
 
@@ -70,8 +71,8 @@ func (p *PubSub) Publish(channel string, data []byte) error {
 	conn := p.pool.Get()
 	_, err := conn.Do("PUBLISH", channel, data)
 	conn.Close()
-	if err != nil {
-		p.log.Error("publish failed", err)
+	if err != nil && p.log.Err() {
+		p.log.Err("publish failed", err)
 	}
 	return err
 }
@@ -115,7 +116,9 @@ func (p *PubSub) processMessages() {
 									continue
 								}
 							}
-							p.log.Error("redis.pubsub: error when receiving from Redis:", v)
+							if p.log.Err() {
+								p.log.Err("redis.pubsub: error when receiving from Redis:", v)
+							}
 						}
 					}
 				}
