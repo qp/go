@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/stretchr/slog"
 )
 
 // errResolving represents failure to resolve requests.
@@ -58,17 +60,17 @@ type requester struct {
 	transport       DirectTransport
 	responseChannel string
 	resolver        *reqResolver
-	logger          Logger
+	logger          slog.Logger
 }
 
 // NewRequester makes a new object capable of making requests and handling responses.
 func NewRequester(name, instanceID string, codec Codec, transport DirectTransport) Requester {
-	return NewRequesterLogger(name, instanceID, codec, transport, NilLogger)
+	return NewRequesterLogger(name, instanceID, codec, transport, slog.NilLogger)
 }
 
 // NewRequesterLogger makes a new object capable of making requests and handling responses
 // with logs going to the specified Logger.
-func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger Logger) Requester {
+func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTransport, logger slog.Logger) Requester {
 	r := &requester{
 		transport: transport,
 		codec:     codec,
@@ -76,23 +78,36 @@ func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTr
 		logger:    logger,
 	}
 	r.responseChannel = name + "." + instanceID
+
 	r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
+		r.logger.Info("received on", r.responseChannel, m)
 		var response Response
 		if err := r.codec.Unmarshal(m.Data, &response); err != nil {
-			r.logger.Error("requester: borked response:", err)
+			if r.logger.Err() {
+				r.logger.Err("borked response:", err)
+			}
 			return
 		}
 		go func() {
 			if err := r.resolver.Resolve(&response); err != nil {
-				r.logger.Error("requester: failed to resolve:", err)
+				if r.logger.Err() {
+					r.logger.Err("failed to resolve:", err)
+				}
 			}
 		}()
 	}))
+	if r.logger.Info() {
+		r.logger.Info("listening on", r.responseChannel)
+	}
 
 	return r
 }
 
 func (r *requester) Issue(pipeline []string, obj interface{}) (*Future, error) {
+
+	if r.logger.Info() {
+		r.logger.Info("issuing", pipeline, obj)
+	}
 
 	request := newRequest(r.responseChannel, obj, pipeline[1:])
 	to := pipeline[0]

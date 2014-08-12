@@ -1,11 +1,13 @@
 package inproc
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/qp/go"
 	"github.com/stretchr/pat/stop"
+	"github.com/stretchr/slog"
 )
 
 var exists = struct{}{}
@@ -15,7 +17,7 @@ type PubSub struct {
 	lock     sync.RWMutex
 	handlers map[string]qp.Handler
 	stopChan chan stop.Signal
-	Logger   qp.Logger
+	Logger   slog.Logger
 }
 
 // ensure the interface is satisfied
@@ -29,7 +31,7 @@ var pubSubLock sync.RWMutex
 func NewPubSub() *PubSub {
 	p := &PubSub{
 		handlers: make(map[string]qp.Handler),
-		Logger:   qp.NilLogger,
+		Logger:   slog.NilLogger,
 	}
 	pubSubLock.Lock()
 	pubSubInstances[p] = exists
@@ -66,7 +68,9 @@ func init() {
 // Publish publishes data on the specified channel.
 func (p *PubSub) Publish(channel string, data []byte) error {
 	m := &qp.Message{Source: channel, Data: data}
-	p.Logger.Infof("publish %v", m)
+	if p.Logger.Info() {
+		p.Logger.Info(fmt.Sprintf("publish %v", m))
+	}
 	pubSubQueue <- m
 	return nil
 }

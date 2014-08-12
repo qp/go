@@ -1,11 +1,13 @@
 package inproc
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/qp/go"
 	"github.com/stretchr/pat/stop"
+	"github.com/stretchr/slog"
 )
 
 // Direct represents a qp.DirectTransport.
@@ -13,7 +15,7 @@ type Direct struct {
 	lock     sync.RWMutex
 	handlers map[string]qp.Handler
 	stopChan chan stop.Signal
-	Logger   qp.Logger
+	Logger   slog.Logger
 }
 
 // ensure the interface is satisfied
@@ -27,7 +29,7 @@ var directLock sync.RWMutex
 func NewDirect() *Direct {
 	p := &Direct{
 		handlers: make(map[string]qp.Handler),
-		Logger:   qp.NilLogger,
+		Logger:   slog.NilLogger,
 	}
 	directLock.Lock()
 	directInstances[p] = exists
@@ -66,7 +68,9 @@ func init() {
 // Send sends a message to the given chanenl
 func (p *Direct) Send(channel string, data []byte) error {
 	m := &qp.Message{Source: channel, Data: data}
-	p.Logger.Infof("send %v", m)
+	if p.Logger.Info() {
+		p.Logger.Info(fmt.Sprintf("send %v", m))
+	}
 	directQueue <- m
 	return nil
 }

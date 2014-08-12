@@ -9,6 +9,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
 	"github.com/stretchr/pat/stop"
+	"github.com/stretchr/slog"
 )
 
 // PubSub represents a qp.PubSubTransport.
@@ -19,7 +20,7 @@ type PubSub struct {
 	running  uint32
 	shutdown chan qp.Signal
 	stopChan chan stop.Signal
-	log      qp.Logger
+	log      slog.Logger
 }
 
 // ensure the interface is satisfied
@@ -51,13 +52,13 @@ func NewPubSubTimeout(url string, connectTimeout, readTimeout, writeTimeout time
 		handlers: make(map[string]qp.Handler),
 		shutdown: make(chan qp.Signal),
 		stopChan: stop.Make(),
-		log:      qp.NilLogger,
+		log:      slog.NilLogger,
 	}
 	return p
 }
 
 // SetLogger sets the Logger to log to.
-func (p *PubSub) SetLogger(log qp.Logger) {
+func (p *PubSub) SetLogger(log slog.Logger) {
 	p.log = log
 }
 
@@ -66,12 +67,14 @@ func (p *PubSub) Publish(channel string, data []byte) error {
 	if atomic.LoadUint32(&p.running) == 0 {
 		return qp.ErrNotRunning
 	}
-	p.log.Info("publish to", channel, string(data))
+	if p.log.Info() {
+		p.log.Info("publish to", channel, string(data))
+	}
 	conn := p.pool.Get()
 	_, err := conn.Do("PUBLISH", channel, data)
 	conn.Close()
-	if err != nil {
-		p.log.Error("publish failed", err)
+	if err != nil && p.log.Err() {
+		p.log.Err("publish failed", err)
 	}
 	return err
 }
@@ -81,7 +84,9 @@ func (p *PubSub) Subscribe(channel string, handler qp.Handler) error {
 	if atomic.LoadUint32(&p.running) == 1 {
 		return qp.ErrRunning
 	}
-	p.log.Info("subscribing to", channel)
+	if p.log.Info() {
+		p.log.Info("subscribing to", channel)
+	}
 	p.lock.Lock()
 	p.handlers[channel] = handler
 	p.lock.Unlock()
@@ -98,24 +103,42 @@ func (p *PubSub) processMessages() {
 				for {
 					select {
 					case <-p.shutdown:
-						p.log.Info("shutting down")
+						if p.log.Info() {
+							p.log.Info("shutting down")
+						}
 						psc.PUnsubscribe(channel)
 						conn.Close()
 						return
 					default:
 						switch v := psc.Receive().(type) {
 						case redis.PMessage:
-							p.log.Info("handling message from", v.Channel, v.Data)
-							go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
-						case error:
-							// Network timeout is fine also.
-							if netErr, ok := v.(net.Error); ok {
-								if netErr.Timeout() {
-									p.log.Info("network timeout, refreshing.")
-									continue
-								}
+							if p.log.Info() {
+								p.log.Info("handling message from", v.Channel, v.Data)
 							}
-							p.log.Error("redis.pubsub: error when receiving from Redis:", v)
+							go handler.Handle(&qp.Message{Source: v.Channel, Data: v.Data})
+						case net.Error:
+							// Network timeout is fine also.
+							if v.(net.Error).Timeout() {
+								if p.log.Info() {
+									p.log.Info("network timeout, refreshing.")
+								}
+								continue
+							}
+							if p.log.Warn() {
+								p.log.Warn("error when receiving from Redis:", v)
+							}
+						case error:
+							if p.log.Warn() {
+								// TODO: decide what's meant to happen at this point -
+								// at the moment, we just get millions of error reports.
+								// To recreate:
+								// 1. start redis
+								// 2. run a service (or other direct transporter thing)
+								// 3. stop redis
+								// 4. watch logs
+								p.log.Warn("error when receiving from Redis:", v)
+							}
+							return
 						}
 					}
 				}

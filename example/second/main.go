@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/qp/go"
 	"github.com/qp/go/redis"
+	"github.com/stretchr/slog"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	t := redis.NewDirect("127.0.0.1:6379")
 
 	// setup logger to Stdout
-	t.SetLogger(qp.LogLogger(log.New(os.Stdout, "second: ", log.Lshortfile)))
+	t.SetLogger(slog.New("second", slog.Everything))
 
 	qp.Service("second", "one", qp.JSON, t,
 		qp.RequestHandlerFunc(func(r *qp.Request) {
