@@ -118,14 +118,14 @@ func (d *Direct) processMessages() {
 							}
 							if sleeper.Sleep() == sleep.Abort {
 								if d.log.Err() {
-									d.log.Err("aborting:", err)
+									d.log.Err("unable to connect to redis - aborting:", err)
 								}
 								return
 							}
 						} else {
 							if sleeper.Reset() {
 								if d.log.Warn() {
-									d.log.Warn("carrying on")
+									d.log.Warn("reconnected to redis after interruption")
 								}
 							}
 						}
