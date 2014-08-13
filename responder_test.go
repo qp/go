@@ -9,7 +9,7 @@ import (
 
 func TestHandlerFunc(t *testing.T) {
 
-	var _ qp.RequestHandler = qp.RequestHandlerFunc(func(r *qp.Request) {})
+	var _ qp.RequestHandler = qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request { return r })
 
 }
 
@@ -26,17 +26,24 @@ func TestResponder(t *testing.T) {
 	require.NotNil(t, r3)
 
 	var requests []*qp.Request
-	require.NoError(t, r1.HandleFunc("one", func(r *qp.Request) {
+	require.NoError(t, r1.HandleFunc("one", func(r *qp.Request) *qp.Request {
 		requests = append(requests, r)
-		r.Data.(map[string]interface{})["one"] = true
+		// send a new object (should be fine)
+		return &qp.Request{From: r.From,
+			To:   r.To,
+			ID:   r.ID,
+			Data: map[string]interface{}{"one": true},
+		}
 	}))
-	require.NoError(t, r2.HandleFunc("two", func(r *qp.Request) {
+	require.NoError(t, r2.HandleFunc("two", func(r *qp.Request) *qp.Request {
 		requests = append(requests, r)
 		r.Data.(map[string]interface{})["two"] = true
+		return r
 	}))
-	require.NoError(t, r3.HandleFunc("three", func(r *qp.Request) {
+	require.NoError(t, r3.HandleFunc("three", func(r *qp.Request) *qp.Request {
 		requests = append(requests, r)
 		r.Data.(map[string]interface{})["three"] = true
+		return r
 	}))
 
 	require.NotNil(t, tp.OnMessages["one"])

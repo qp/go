@@ -1,20 +1,24 @@
 package qp
 
-import "github.com/stretchr/slog"
+import (
+	"errors"
+
+	"github.com/stretchr/slog"
+)
 
 // RequestHandler represents types capable of handling Requests.
 type RequestHandler interface {
-	Handle(r *Request)
+	Handle(req *Request) *Request
 }
 
 // RequestHandlerFunc represents functions capable of handling
 // Requests.
-type RequestHandlerFunc func(r *Request)
+type RequestHandlerFunc func(r *Request) *Request
 
 // Handle calls the RequestHandlerFunc in order to handle
 // the specific Request.
-func (f RequestHandlerFunc) Handle(r *Request) {
-	f(r)
+func (f RequestHandlerFunc) Handle(r *Request) *Request {
+	return f(r)
 }
 
 // Responder represents types capable of responding to requests.
@@ -58,12 +62,12 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 		var request Request
 		if err := r.codec.Unmarshal(msg.Data, &request); err != nil {
 			if r.log.Err() {
-				r.log.Err("responder: unmarshal error:", err)
+				r.log.Err("unmarshal error:", err)
 			}
 			return
 		}
 
-		handler.Handle(&request)
+		request = *handler.Handle(&request)
 
 		// at this point, the caller has mutated the data.
 		// forward this request object to the next endpoint
@@ -74,6 +78,13 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 			request.To = request.To[1:]
 		} else {
 			// send it from form whence it came
+			if len(request.From) == 0 {
+				err := errors.New("cannot respond when From field is empty")
+				if r.log.Err() {
+					r.log.Err("error handling request:", err)
+				}
+				return
+			}
 			to = request.From[0]
 		}
 		request.From = append(request.From, r.uniqueID)
@@ -82,7 +93,7 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 		data, err := r.codec.Marshal(request)
 		if err != nil {
 			if r.log.Err() {
-				r.log.Err("responder: error encoding data for pipeline:", err)
+				r.log.Err("error encoding data for pipeline:", err)
 			}
 			return
 		}
