@@ -22,11 +22,13 @@ func main() {
 	t.SetLogger(slog.New("second", slog.Everything))
 
 	err := qp.Service("second", "one", qp.JSON, t,
-		qp.RequestHandlerFunc(func(r *qp.Request) {
+		qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request {
 			d, _ := json.Marshal(r)
 			fmt.Println("Hello from second!", string(d))
 			r.Data.(map[string]interface{})["messages"] = append(r.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the second service at "+time.Now().String())
-		}))
+			return r
+		}),
+	)
 
 	if err != nil {
 		fmt.Println("error registering service", err)
