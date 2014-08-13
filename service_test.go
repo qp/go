@@ -14,7 +14,7 @@ import (
 func TestServiceHandler(t *testing.T) {
 	d := inproc.NewDirect()
 	qp.Service("name", "instance", qp.JSON, d,
-		qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request {
+		qp.TransactionHandlerFunc(func(r *qp.Transaction) *qp.Transaction {
 			r.Data = "hit"
 			return r
 		}),
@@ -40,17 +40,17 @@ func TestServiceHandler(t *testing.T) {
 func TestServiceMultiple(t *testing.T) {
 	d := inproc.NewDirect()
 	qp.Service("name", "instance", qp.JSON, d,
-		qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request {
+		qp.TransactionHandlerFunc(func(r *qp.Transaction) *qp.Transaction {
 			r.Data = append(r.Data.([]interface{}), "first")
 			return r
 		}))
 	qp.Service("name2", "instance", qp.JSON, d,
-		qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request {
+		qp.TransactionHandlerFunc(func(r *qp.Transaction) *qp.Transaction {
 			r.Data = append(r.Data.([]interface{}), "second")
 			return r
 		}))
 	qp.Service("name3", "instance", qp.JSON, d,
-		qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request {
+		qp.TransactionHandlerFunc(func(r *qp.Transaction) *qp.Transaction {
 			r.Data = append(r.Data.([]interface{}), "third")
 			return r
 		}))

@@ -6,27 +6,27 @@ import (
 	"github.com/stretchr/slog"
 )
 
-// RequestHandler represents types capable of handling Requests.
-type RequestHandler interface {
-	Handle(req *Request) *Request
+// TransactionHandler represents types capable of handling Requests.
+type TransactionHandler interface {
+	Handle(req *Transaction) *Transaction
 }
 
-// RequestHandlerFunc represents functions capable of handling
+// TransactionHandlerFunc represents functions capable of handling
 // Requests.
-type RequestHandlerFunc func(r *Request) *Request
+type TransactionHandlerFunc func(r *Transaction) *Transaction
 
-// Handle calls the RequestHandlerFunc in order to handle
-// the specific Request.
-func (f RequestHandlerFunc) Handle(r *Request) *Request {
+// Handle calls the TransactionHandlerFunc in order to handle
+// the specific Transaction.
+func (f TransactionHandlerFunc) Handle(r *Transaction) *Transaction {
 	return f(r)
 }
 
 // Responder represents types capable of responding to requests.
 type Responder interface {
-	// Handle binds a RequestHandler to the specified channel.
-	Handle(channel string, handler RequestHandler) error
+	// Handle binds a TransactionHandler to the specified channel.
+	Handle(channel string, handler TransactionHandler) error
 	// HandleFunc binds the specified function to the specified channel.
-	HandleFunc(channel string, f RequestHandlerFunc) error
+	HandleFunc(channel string, f TransactionHandlerFunc) error
 }
 
 // responder responds to requests.
@@ -55,11 +55,11 @@ func NewResponderLogger(name, instanceID string, codec Codec, transport DirectTr
 	}
 }
 
-func (r *responder) Handle(channel string, handler RequestHandler) error {
+func (r *responder) Handle(channel string, handler TransactionHandler) error {
 
 	return r.transport.OnMessage(channel, HandlerFunc(func(msg *Message) {
 
-		var request Request
+		var request Transaction
 		if err := r.codec.Unmarshal(msg.Data, &request); err != nil {
 			if r.log.Err() {
 				r.log.Err("unmarshal error:", err)
@@ -105,6 +105,6 @@ func (r *responder) Handle(channel string, handler RequestHandler) error {
 
 }
 
-func (r *responder) HandleFunc(channel string, f RequestHandlerFunc) error {
+func (r *responder) HandleFunc(channel string, f TransactionHandlerFunc) error {
 	return r.Handle(channel, f)
 }
