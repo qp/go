@@ -8,6 +8,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/qp/go"
+	"github.com/stretchr/pat/sleep"
 	"github.com/stretchr/pat/stop"
 	"github.com/stretchr/slog"
 )
@@ -94,10 +95,15 @@ func (p *PubSub) processMessages() {
 	go func() {
 		for c, h := range p.handlers {
 			go func(channel string, handler qp.Handler) {
-				conn := p.pool.Get()
-				psc := redis.PubSubConn{Conn: conn}
-				psc.PSubscribe(channel)
+				sleeper := sleep.New()
+				sleeper.Add(1*time.Minute, 1*time.Second)
+				sleeper.Add(5*time.Minute, 10*time.Second)
+				sleeper.Add(10*time.Minute, 30*time.Second)
+
+				var conn redis.Conn
+				var psc redis.PubSubConn
 				closed := false
+
 				go func() {
 					<-p.shutdown
 					if p.log.Info() {
@@ -107,8 +113,16 @@ func (p *PubSub) processMessages() {
 					psc.Close()
 				}()
 				for {
+					conn = p.pool.Get()
+					psc = redis.PubSubConn{Conn: conn}
+					psc.PSubscribe(channel)
 					switch v := psc.Receive().(type) {
 					case redis.PMessage:
+						if sleeper.Reset() {
+							if p.log.Warn() {
+								p.log.Warn("reconnected to redis after interruption")
+							}
+						}
 						if p.log.Info() {
 							p.log.Info("handling message from", v.Channel+":", string(v.Data))
 						}
@@ -118,9 +132,14 @@ func (p *PubSub) processMessages() {
 							return
 						}
 						if p.log.Warn() {
-							p.log.Warn("error when receiving from Redis:", v)
+							p.log.Warn("error when receiving from redis:", v)
 						}
-						return
+						if sleeper.Sleep() == sleep.Abort {
+							if p.log.Err() {
+								p.log.Err("unable to connect to redis - aborting:", v)
+							}
+							return
+						}
 					}
 				}
 			}(c, h)
