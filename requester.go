@@ -21,10 +21,9 @@ func (e errResolving) Error() string {
 // ErrTimeout represents situations when timeouts have occurred.
 var ErrTimeout = errors.New("timed out")
 
-// Request defines all the fields and information
-// in the standard qp request object. It is used
-// as part of the Handler callback.
-type Request struct {
+// Transaction defines all the fields and information
+// in the standard qp request object.
+type Transaction struct {
 	// To is an array of destination addresses
 	To []string `json:"to"`
 	// From is an array of addresses encountered thus far
@@ -35,15 +34,15 @@ type Request struct {
 	Data interface{} `json:"data"`
 }
 
-// Abort clears the To slice indicating that the Request should
+// Abort clears the To slice indicating that the Transaction should
 // be sent back to the originator.
-func (r *Request) Abort() {
+func (r *Transaction) Abort() {
 	r.To = []string{}
 }
 
 // newRequest makes a new request object and generates a unique ID in the from array.
-func newRequest(endpoint string, object interface{}, pipeline []string) *Request {
-	return &Request{To: pipeline, From: []string{endpoint}, ID: unique(), Data: object}
+func newTransaction(endpoint string, object interface{}, pipeline []string) *Transaction {
+	return &Transaction{To: pipeline, From: []string{endpoint}, ID: unique(), Data: object}
 }
 
 // Requester represents a type capable of issuing requests and getting
@@ -87,7 +86,7 @@ func NewRequesterLogger(name, instanceID string, codec Codec, transport DirectTr
 
 	err := r.transport.OnMessage(r.responseChannel, HandlerFunc(func(m *Message) {
 		r.logger.Info("received on", r.responseChannel, m)
-		var response Response
+		var response Transaction
 		if err := r.codec.Unmarshal(m.Data, &response); err != nil {
 			if r.logger.Err() {
 				r.logger.Err("borked response:", err)
@@ -121,13 +120,13 @@ func (r *requester) Issue(pipeline []string, obj interface{}) (*Future, error) {
 		r.logger.Info("issuing", pipeline, obj)
 	}
 
-	request := newRequest(r.responseChannel, obj, pipeline[1:])
+	transaction := newTransaction(r.responseChannel, obj, pipeline[1:])
 	to := pipeline[0]
-	bytes, err := r.codec.Marshal(request)
+	bytes, err := r.codec.Marshal(transaction)
 	if err != nil {
 		return nil, err
 	}
-	f := newFuture(request.ID)
+	f := newFuture(transaction.ID)
 	r.resolver.Track(f)
 	r.transport.Send(to, bytes)
 
@@ -140,8 +139,8 @@ func (r *requester) Issue(pipeline []string, obj interface{}) (*Future, error) {
 // waits for the response to come back.
 type Future struct {
 	id       RequestID
-	response chan *Response
-	cached   *Response
+	response chan *Transaction
+	cached   *Transaction
 	fetched  chan Signal
 }
 
@@ -149,7 +148,7 @@ type Future struct {
 // is initialized appropriately for waiting on an incoming
 // response.
 func newFuture(id RequestID) *Future {
-	return &Future{id: id, response: make(chan *Response), fetched: make(chan Signal)}
+	return &Future{id: id, response: make(chan *Transaction), fetched: make(chan Signal)}
 }
 
 // Response uses a future mechanism to retrieve the response.
@@ -157,7 +156,7 @@ func newFuture(id RequestID) *Future {
 // at which point execution blocks until the Response object is
 // available, or if the timeout is reached.
 // If the Response times out, nil is returned.
-func (r *Future) Response(timeout time.Duration) (*Response, error) {
+func (r *Future) Response(timeout time.Duration) (*Transaction, error) {
 	select {
 	case <-r.fetched: // response already here
 		return r.cached, nil
@@ -168,17 +167,6 @@ func (r *Future) Response(timeout time.Duration) (*Response, error) {
 		// timed out
 		return nil, ErrTimeout
 	}
-}
-
-// Response defines all the fields and information
-// included as part of a response to a request.
-type Response struct {
-	// From is an array of addresses encountered thus far
-	From []string `json:"from"`
-	// ID is the ID of the request to which this response relates
-	ID RequestID `json:"id"`
-	// Data is the repsonse data payload
-	Data interface{} `json:"data"`
 }
 
 // RequestResolver is responsible for tracking futures
@@ -204,7 +192,7 @@ func (c *reqResolver) Track(future *Future) {
 
 // Resolve resolves a Future by matching it up
 // with the given Response
-func (c *reqResolver) Resolve(response *Response) error {
+func (c *reqResolver) Resolve(response *Transaction) error {
 	var future *Future
 	c.lock.Lock()
 	future = c.items[response.ID]

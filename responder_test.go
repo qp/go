@@ -9,7 +9,7 @@ import (
 
 func TestHandlerFunc(t *testing.T) {
 
-	var _ qp.RequestHandler = qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request { return r })
+	var _ qp.TransactionHandler = qp.TransactionHandlerFunc(func(r *qp.Transaction) *qp.Transaction { return r })
 
 }
 
@@ -25,22 +25,22 @@ func TestResponder(t *testing.T) {
 	require.NotNil(t, r2)
 	require.NotNil(t, r3)
 
-	var requests []*qp.Request
-	require.NoError(t, r1.HandleFunc("one", func(r *qp.Request) *qp.Request {
+	var requests []*qp.Transaction
+	require.NoError(t, r1.HandleFunc("one", func(r *qp.Transaction) *qp.Transaction {
 		requests = append(requests, r)
 		// send a new object (should be fine)
-		return &qp.Request{From: r.From,
+		return &qp.Transaction{From: r.From,
 			To:   r.To,
 			ID:   r.ID,
 			Data: map[string]interface{}{"one": true},
 		}
 	}))
-	require.NoError(t, r2.HandleFunc("two", func(r *qp.Request) *qp.Request {
+	require.NoError(t, r2.HandleFunc("two", func(r *qp.Transaction) *qp.Transaction {
 		requests = append(requests, r)
 		r.Data.(map[string]interface{})["two"] = true
 		return r
 	}))
-	require.NoError(t, r3.HandleFunc("three", func(r *qp.Request) *qp.Request {
+	require.NoError(t, r3.HandleFunc("three", func(r *qp.Transaction) *qp.Transaction {
 		requests = append(requests, r)
 		r.Data.(map[string]interface{})["three"] = true
 		return r
@@ -51,7 +51,7 @@ func TestResponder(t *testing.T) {
 	require.NotNil(t, tp.OnMessages["three"])
 
 	// send fake response
-	testRequest := &qp.Request{
+	testRequest := &qp.Transaction{
 		ID:   qp.RequestID(1),
 		Data: testData,
 		To:   []string{"two", "three"},
@@ -68,7 +68,7 @@ func TestResponder(t *testing.T) {
 	tp.OnMessages["three"].Handle(&qp.Message{Data: tp.Sends["three"]})
 	require.Equal(t, len(requests), 3)
 	require.NotNil(t, tp.Sends["function-one.instance"])
-	var finalRequest qp.Request
+	var finalRequest qp.Transaction
 
 	require.NoError(t, qp.JSON.Unmarshal(tp.Sends["function-one.instance"], &finalRequest))
 

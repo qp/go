@@ -22,7 +22,7 @@ func main() {
 	t.SetLogger(slog.New("second", slog.Everything))
 
 	err := qp.Service("second", "one", qp.JSON, t,
-		qp.RequestHandlerFunc(func(r *qp.Request) *qp.Request {
+		qp.TransactionHandlerFunc(func(r *qp.Transaction) *qp.Transaction {
 			d, _ := json.Marshal(r)
 			fmt.Println("Hello from second!", string(d))
 			r.Data.(map[string]interface{})["messages"] = append(r.Data.(map[string]interface{})["messages"].([]interface{}), "Hello from the second service at "+time.Now().String())

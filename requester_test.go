@@ -26,7 +26,7 @@ func TestRequester(t *testing.T) {
 	if len(bytes) == 0 {
 		require.FailNow(t, "Send was not called on Transport")
 	}
-	var req qp.Request
+	var req qp.Transaction
 	qp.JSON.Unmarshal(bytes, &req)
 	require.NotEmpty(t, req.ID)
 	require.Equal(t, len(req.From), 1)
@@ -37,7 +37,7 @@ func TestRequester(t *testing.T) {
 	require.Equal(t, req.Data, testData)
 
 	// send fake response
-	testResponse := &qp.Response{
+	testResponse := &qp.Transaction{
 		ID: req.ID,
 	}
 	responseMsg := &qp.Message{Source: "", Data: json(testResponse)}
@@ -51,7 +51,7 @@ func TestRequester(t *testing.T) {
 
 func TestAbort(t *testing.T) {
 
-	r := qp.Request{To: []string{"one", "two", "three"}}
+	r := qp.Transaction{To: []string{"one", "two", "three"}}
 	r.Abort()
 	require.Equal(t, 0, len(r.To))
 
@@ -75,7 +75,7 @@ func TestRequesterResponseTimeout(t *testing.T) {
 	if len(bytes) == 0 {
 		require.FailNow(t, "Send was not called on Transport")
 	}
-	var req qp.Request
+	var req qp.Transaction
 	qp.JSON.Unmarshal(bytes, &req)
 	require.NotEmpty(t, req.ID)
 	require.Equal(t, len(req.From), 1)
